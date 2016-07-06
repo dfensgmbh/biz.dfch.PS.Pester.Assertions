@@ -71,7 +71,7 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 		
 		}
 
-		It 'ThrowExceptionWithoutExceptionSucceeds' -Test {
+		It 'ThrowExceptionWithoutExceptionShouldSucceedButActuallyFails' -Test {
 		
 			{ 1 * 0 } | Should Not ThrowException System.DivideByZeroException;
 		
