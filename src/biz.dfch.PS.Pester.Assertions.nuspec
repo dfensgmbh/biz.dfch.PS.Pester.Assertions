@@ -6,9 +6,9 @@
         <title>biz.dfch.PS.Pester.Assertions</title>
         <authors>d-fens GmbH</authors>
         <owners>Ronald Rink</owners>
-        <licenseUrl>https://github.com/dfch/biz.dfch.PS.Pester.Assertions/blob/master/LICENSE</licenseUrl>
-        <projectUrl>https://github.com/dfch/biz.dfch.PS.Pester.Assertions</projectUrl>
-        <iconUrl>https://raw.githubusercontent.com/dfch/biz.dfch.PS.Pester.Assertions/master/logo-32x32.png</iconUrl>
+        <licenseUrl>https://github.com/dfensgmbh/biz.dfch.PS.Pester.Assertions/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/dfensgmbh/biz.dfch.PS.Pester.Assertions</projectUrl>
+        <iconUrl>https://raw.githubusercontent.com/dfensgmbh/biz.dfch.PS.Pester.Assertions/master/logo-32x32.png</iconUrl>
         <requireLicenseAcceptance>true</requireLicenseAcceptance>
         <description>biz.dfch.PS.Pester.Assertions
 ============================
@@ -21,7 +21,7 @@ This PowerShell module contains Cmdlets to add custom assertions to the Pester t
 
 You can download this module via [NuGet](http://nuget.org) with [Install-Package biz.dfch.PS.Pester.Assertions](https://www.nuget.org/packages/biz.dfch.PS.Pester.Assertions/).
 
-Check the [Wiki](https://github.com/dfch/biz.dfch.PS.Pester.Assertions/wiki) for further description and examples on how to use the module.</description>
+Check the [Wiki](https://github.com/dfensgmbh/biz.dfch.PS.Pester.Assertions/wiki) for further description and examples on how to use the module.</description>
         <summary>This PowerShell module contains Cmdlets to add custom assertions to the Pester testing framework.</summary>
         <releaseNotes>20160706
 
@@ -29,7 +29,7 @@ Check the [Wiki](https://github.com/dfch/biz.dfch.PS.Pester.Assertions/wiki) for
 </releaseNotes>
         <copyright>(c) 2016 d-fens GmbH</copyright>
         <language>en-US</language>
-        <tags>PowerShell dfch</tags>
+        <tags>PowerShell dfch Pester</tags>
         <dependencies>
             <dependency id="biz.dfch.PS.System.Logging" version="1.3.1" />
             <dependency id="biz.dfch.PS.System.Utilties" version="1.1.1" />
