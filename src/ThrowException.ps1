@@ -1,117 +1,151 @@
-# Module manifest for module 'biz.dfch.PS.Pester.Assertions'
+﻿function PesterThrowException {
+<#
+.SYNOPSIS
+Tests the actual exception for a given exception.
 
-@{
+.DESCRIPTION
+Tests the actual exception for a given exception.
 
-# Script module or binary module file associated with this manifest.
-RootModule = 'biz.dfch.PS.Pester.Assertions.psm1'
+This Cmdlet is used inside a Pester test as a custom Pester assertion.
 
-# Version number of this module.
-ModuleVersion = '1.0.0.20160706'
+.INPUTS
+The inputs are defined by the Pester testing framework. See this link for 
+details and explanation: http://d.evops.co/?p=468.
 
-# ID used to uniquely identify this module
-GUID = 'a4e07467-4a8e-4ec9-be7f-149f0c08633c'
+.OUTPUTS
+The Cmdlet returns a Boolean.
 
-# Author of this module
-Author = 'Ronald Rink'
+.EXAMPLE
+# This script block will throw a 'System.DivideByZeroException'. The assertion 
+# matches for 'System.DivideByZeroException' and will therefore succeed.
 
-# Company or vendor of this module
-CompanyName = 'd-fens GmbH'
+PS > { 1 / 0 } | Should ThrowException System.DivideByZeroException;
 
-# Copyright statement for this module
-Copyright = '(c) 2016 d-fens GmbH. Distributed under Apache 2.0 license.'
+.EXAMPLE
+# This script block will throw a 'System.DivideByZeroException'. The assertion 
+# matches for 'DivideByZeroException' (at the end of the exception type) and 
+# will therefore succeed.
 
-# Description of the functionality provided by this module
-Description = 'This PowerShell module contains Cmdlets to perform various actions and utilties/convenience functions such as string conversion and formatting.'
+PS > { 1 / 0 } | Should ThrowException 'DivideByZeroException$';
 
-# Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '3.0'
+.EXAMPLE
+# This script block will throw a 'System.DivideByZeroException'. The assertion 
+# matches for 'DivideByZero' and will therefore succeed.
 
-# Name of the Windows PowerShell host required by this module
-# PowerShellHostName = ''
+PS > { 1 / 0 } | Should ThrowException DivideByZero;
 
-# Minimum version of the Windows PowerShell host required by this module
-# PowerShellHostVersion = ''
+.EXAMPLE
+# This script block will throw a 'System.DivideByZeroException'. The assertion 
+# matches for 'CommandNotFoundException' and will therefore fail.
 
-# Minimum version of the .NET Framework required by this module
-DotNetFrameworkVersion = '4.5'
+PS > { 1 / 0 } | Should ThrowException CommandNotFoundException;
 
-# Minimum version of the common language runtime (CLR) required by this module
-# CLRVersion = ''
+.LINK
+Online Version: http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowException/
 
-# Processor architecture (None, X86, Amd64) required by this module
-# ProcessorArchitecture = ''
+.NOTES
+See module manifest for required software versions and dependencies at: 
+http://dfch.biz/biz/dfch/PS/Pester/Assertions/biz.dfch.PS.Pester.Assertions.psd1/
 
-# Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @(
-	'biz.dfch.PS.System.Logging'
+
+#>
+[CmdletBinding(
+	SupportsShouldProcess = $false
 	,
-	'biz.dfch.PS.System.Logging'
+	ConfirmImpact = 'Low'
 	,
-	'Pester'
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowException/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
 )
 
-# Assemblies that must be loaded prior to importing this module
-RequiredAssemblies = @(
+	[string] $fn = $MyInvocation.MyCommand.Name;
+
+	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
+	Contract-Assert (!!$expectedException)
+	
+	$hasExceptionOccurred = $false;
+	try
+	{
+		Invoke-Command -ScriptBlock $value;
+	}
+	catch
+	{
+		$er = $_;
+		$hasExceptionOccurred = $true;
+	}
+
+	if(!$hasExceptionOccurred)
+	{
+		throw "Test was supposed to throw exception '{0}', but was not thrown." -f $expectedException;
+	}
+
+	Contract-Assert (!!$er.Exception.InnerException)
+
+	$ex = $er.Exception.InnerException;
+	
+	$result = $ex.GetType().FullName -match $expectedException;
+	return $result;
+
+} # function
+
+function PesterThrowExceptionFailureMessage {
+[CmdletBinding(
+	SupportsShouldProcess = $false
+	,
+	ConfirmImpact = 'Low'
+	,
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowExceptionFailureMessage/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
 )
 
-# Script files (.ps1) that are run in the caller's environment prior to importing this module.
-ScriptsToProcess = @(
-	'Import-Module.ps1'
+	[string] $fn = $MyInvocation.MyCommand.Name;
+
+	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
+	Contract-Assert (!!$expectedException)
+
+	$message = "Test was expected to throw exception of type '{0}', but was not thrown." -f $expectedException;
+	return $message;
+
+} # function
+
+function NotPesterThrowExceptionFailureMessage {
+[CmdletBinding(
+	SupportsShouldProcess = $false
+	,
+	ConfirmImpact = 'Low'
+	,
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/NotThrowExceptionFailureMessage/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
 )
 
-# Type files (.ps1xml) to be loaded when importing this module
-# TypesToProcess = @()
+	[string] $fn = $MyInvocation.MyCommand.Name;
 
-# Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
+	Contract-Assert (!!$expectedException)
 
-# Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @(
-	'ThrowException.ps1'
-)
+	$message = "Test was not expected to throw exception of type '{0}', but was actually thrown." -f $expectedException;
+	return $message;
 
-# Functions to export from this module
-FunctionsToExport = '*'
+} # function
 
-# Cmdlets to export from this module
-CmdletsToExport = '*'
-
-# Variables to export from this module
-VariablesToExport = '*'
-
-# Aliases to export from this module
-AliasesToExport = '*'
-
-# List of all modules packaged with this module.
-# ModuleList = @()
-
-# List of all files packaged with this module
-FileList = @(
-	'biz.dfch.PS.Pester.Assertions.xml'
-	,
-	'LICENSE'
-	,
-	'NOTICE'
-	,
-	'README.md'
-	,
-	'Import-Module.ps1'
-)
-
-# Private data to pass to the module specified in RootModule/ModuleToProcess
-PrivateData = @{
-	'MODULEVAR' = 'biz_dfch_PS_Pester_Assertions'
-	;
-	'LicenseUri' = 'https://github.com/dfch/biz.dfch.PS.Pester.Assertions/blob/master/LICENSE'
-}
-
-# HelpInfo URI of this module
-HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
-
-# Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
-# DefaultCommandPrefix = ''
-
-}
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowException; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowExceptionFailureMessage; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowExceptionFailureMessage; } 
 
 #
 # Copyright 2016 d-fens GmbH
@@ -132,8 +166,8 @@ HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUEuPAZgYiEA6x5zG+6w+xJcKm
-# dL6gghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUJwpfb4exyzoAylVkyZY2D4Ph
+# CaqgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -232,26 +266,26 @@ HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSBLS4XZFhvnOKv
-# 3xctTBkWAafbqTANBgkqhkiG9w0BAQEFAASCAQDDKmY7m1CIqkc8Ltf/nvkHUFYA
-# wHUxB518egOHUn62Xl+DPwF8xF1i34oQVyMFwJHZ9t1gvybhYGzyrHTtpY4/q9wp
-# OCTf5g+HlddvbPBeDQJguKL58r0ET4LelFesXz2ZIPKwIUz+trHoxtsjhupSouwv
-# qP/x7onyp/kqtjHUQlDaQqJe75U+SfjVXlKqtygMLVk53pQ8Kl2h1vC0n3PdjPu9
-# QWdrMq1DC/Cq+wFN4LtbKrrw5Wz1LJPvypxxUTMO6SAYS5ZWbzfnaU5zP/wJ1Kwp
-# 8v8b0+zN7HuJ6F0KQ2BaKxQJc+gGclcTgKVV/VyFctfjByt2rI8u11Dow9/coYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRJSGi0BRbQZ3cT
+# lMV8oqi8IH6ORzANBgkqhkiG9w0BAQEFAASCAQDAiIiAV18nkfjFwBOHgF25GC+5
+# PpC+qDPmsdX7v7p6/9kt8ETmygWX2XRfwm7/Kq7fYCc77u0/HNEV4q0cBbTQkrIW
+# v8Av4UdwlAC2Zz2CBcWXv426MWF4eT+K9wPmmp62ZfeVYJmMLmI6ZsOa+965fr1U
+# tmmFmnG/DA0nMCILZYMpY7ejC0qwniHmfad4MtGog+oCVw6zENfr57ZAgetxDz6X
+# NrLyiRyPHvNbVo800/TqappvUl4cx2X1ZVaRBaoAFhLfWugSsf5V1CZlrcViAYRu
+# a+T6Jp+KMaVk+DpMcTrL5A6yd9tTBXjO2s5G5lfAyyUIt5p6IFmTZzyTbaVuoYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcwNjEzNDkzOVowIwYJKoZIhvcNAQkEMRYEFKLsKToKDYravfduyKAFUFc2mDHZ
+# MDcwNjEzNDk0MFowIwYJKoZIhvcNAQkEMRYEFGlNRudr2Uuhy66nwGKOd0NRXzsH
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQCFOO68J0B2wGbYTU7B
-# FJ8X3PLBkbrg3agTC+VLXMWp5kzpSA6iCsT2355YMjAueAJn/xszJ2tItBYUUpcO
-# Gp47uQsvW46C60YyhRezBLgjyhaBXZay2efMY6hyfx+Vy6zAB5KloJdButtB7jwB
-# d86QPIv9MPUpgwDRYDuRrhk82Tj7B+bXGSO/PB0sTEgHz5jorT9kvMURxl/EmQrp
-# fgvfT4+OdU16rY5vmhSWpSA1OnkBWhkx+/6jlExXNlxR0U6pqC5Z5M7BSdX13Jf7
-# E76x1/1WzA/knCfvso+VmxXp0NIPbQ1nBrdNxs8Ov1PEmcRU23fez2j1KhsLGJDl
-# rinC
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQAxm89NxSJM4UPMC7I3
+# T9YqTnEyeuRvGN0bibWkAqy8FWA9mCGU7uJqQqB79GjEFxx/eazTxQLGbXZUBeuT
+# yN960i5RWLtiO82VakmGJ8j7mJPsSeX8mb6DKrTVRKKFrlRnlG3diIDfU+1MBUn0
+# xdzNNWcCW0sT6uSYh6ZWmtS6LE/b+YtIQrZfugIeagtfyNpMwYhkA+gry2fygLG/
+# Jgf0GdtEtqDigd93JFE6YiPDBdPL6xwXMEZxvO+mmW1NqUPYnvhyKtNZsa/5+rM1
+# 2eRP/e8gpujCo6DdfEw93Cx/DFG947kF9hDYe+K0n7Udju1Uat/zeTfDGXAXpLPz
+# Mo+N
 # SIG # End signature block
