@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>biz.dfch.PS.Pester.Assertions</id>
+        <version>1.0.0</version>
+        <title>biz.dfch.PS.Pester.Assertions</title>
+        <authors>d-fens GmbH</authors>
+        <owners>Ronald Rink</owners>
+        <licenseUrl>https://github.com/dfch/biz.dfch.PS.Pester.Assertions/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/dfch/biz.dfch.PS.Pester.Assertions</projectUrl>
+        <iconUrl>https://raw.githubusercontent.com/dfch/biz.dfch.PS.Pester.Assertions/master/logo-32x32.png</iconUrl>
+        <requireLicenseAcceptance>true</requireLicenseAcceptance>
+        <description>biz.dfch.PS.Pester.Assertions
+============================
+
+Modules: biz.dfch.PS.Pester.Assertions
+
+d-fens GmbH, General-Guisan-Strasse 6, CH-6300 Zug, Switzerland
+
+This PowerShell module contains Cmdlets to add custom assertions to the Pester testing framework.
+
+You can download this module via [NuGet](http://nuget.org) with [Install-Package biz.dfch.PS.Pester.Assertions](https://www.nuget.org/packages/biz.dfch.PS.Pester.Assertions/).
+
+Check the [Wiki](https://github.com/dfch/biz.dfch.PS.Pester.Assertions/wiki) for further description and examples on how to use the module.</description>
+        <summary>This PowerShell module contains Cmdlets to add custom assertions to the Pester testing framework.</summary>
+        <releaseNotes>20160706
+
+* added ThrowException assertion
+</releaseNotes>
+        <copyright>(c) 2016 d-fens GmbH</copyright>
+        <language>en-US</language>
+        <tags>PowerShell dfch</tags>
+        <dependencies>
+            <dependency id="biz.dfch.PS.System.Logging" version="1.3.1" />
+            <dependency id="biz.dfch.PS.System.Utilties" version="1.1.1" />
+        </dependencies>
+    </metadata>
+    <files>
+		<file src="Install.ps1" target="Install.ps1" />
+		<file src="..\LICENSE" target="tools\LICENSE" />
+		<file src="..\NOTICE" target="tools\NOTICE" />
+		<file src="..\README.md" target="tools\README.md" />
+        <file src="biz.dfch.PS.Pester.Assertions.psd1" target="tools\biz.dfch.PS.Pester.Assertions.psd1" />
+        <file src="biz.dfch.PS.Pester.Assertions.psm1" target="tools\biz.dfch.PS.Pester.Assertions.psm1" />
+        <file src="biz.dfch.PS.Pester.Assertions.xml" target="tools\biz.dfch.PS.Pester.Assertions.xml" />
+        <file src="ThrowException.ps1" target="tools\ThrowException.ps1" />
+    </files>
+</package>
