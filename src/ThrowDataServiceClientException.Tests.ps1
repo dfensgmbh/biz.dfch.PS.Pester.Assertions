@@ -1,117 +1,87 @@
-# Module manifest for module 'biz.dfch.PS.Pester.Assertions'
+﻿
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
 
-@{
+Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientException.Tests" {
 
-# Script module or binary module file associated with this manifest.
-RootModule = 'biz.dfch.PS.Pester.Assertions.psm1'
+	Mock Export-ModuleMember { return $null; }
 
-# Version number of this module.
-ModuleVersion = '1.0.2.20160707'
+	# . "$here\$sut"
 
-# ID used to uniquely identify this module
-GUID = 'a4e07467-4a8e-4ec9-be7f-149f0c08633c'
+	Context "Test-ThrowDataServiceClientException" {
 
-# Author of this module
-Author = 'Ronald Rink'
+		It 'Warmup' -Test {
+		
+			$true | Should Be $true;
+		
+		}
+		
+		It 'AssertionExists' -Test {
+		
+			$result = Get-Command PesterThrowDataServiceClientException;
+			$result -is [System.Management.Automation.FunctionInfo];
+		
+		}
 
-# Company or vendor of this module
-CompanyName = 'd-fens GmbH'
+		It "GettingHelp-ShouldSucceed" -Test {
 
-# Copyright statement for this module
-Copyright = '(c) 2016 d-fens GmbH. Distributed under Apache 2.0 license.'
+			Get-Help PesterThrowDataServiceClientException | Should Not Be $Null;
+		
+		}
+		
+		It 'TestForStatusCodeSucceeds' -Test {
+		
+			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
+			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
+			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+		
+			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500};
+		
+		}
 
-# Description of the functionality provided by this module
-Description = 'This PowerShell module contains Cmdlets to perform various actions and utilties/convenience functions such as string conversion and formatting.'
+		It 'TestForMessageSucceeds' -Test {
 
-# Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '3.0'
+			$expectedMessage = 'arbitrary-DataServiceClientException-message';
+			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException($expectedMessage, 500);
+			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException("arbitrary-DataServiceQueryException-message", $exDataServiceClientException);
+			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+		
+			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{Message = $expectedMessage};
+		
+		}
 
-# Name of the Windows PowerShell host required by this module
-# PowerShellHostName = ''
+		It 'TestForStatusCodeAndMessageSucceeds' -Test {
 
-# Minimum version of the Windows PowerShell host required by this module
-# PowerShellHostVersion = ''
+			$expectedMessage = 'arbitrary-DataServiceClientException-message';
+			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException($expectedMessage, 500);
+			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException("arbitrary-DataServiceQueryException-message", $exDataServiceClientException);
+			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+		
+			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500; Message = $expectedMessage};
+		
+		}
 
-# Minimum version of the .NET Framework required by this module
-DotNetFrameworkVersion = '4.5'
+		It 'TestForUnexpectedStatusCodeIsSupposedToFail' -Test {
+		
+			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
+			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
+			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+		
+			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 400};
+		
+		}
 
-# Minimum version of the common language runtime (CLR) required by this module
-# CLRVersion = ''
+		It 'TestForUnexpectedStatusCodeAndMessageIsSupposedToFail' -Test {
+		
+			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
+			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
+			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+		
+			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500; Message = 'invalid-message'};
+		
+		}
 
-# Processor architecture (None, X86, Amd64) required by this module
-# ProcessorArchitecture = ''
-
-# Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @(
-	'biz.dfch.PS.System.Logging'
-	,
-	'biz.dfch.PS.System.Utilities'
-	,
-	'Pester'
-)
-
-# Assemblies that must be loaded prior to importing this module
-RequiredAssemblies = @(
-)
-
-# Script files (.ps1) that are run in the caller's environment prior to importing this module.
-ScriptsToProcess = @(
-	'Import-Module.ps1'
-)
-
-# Type files (.ps1xml) to be loaded when importing this module
-# TypesToProcess = @()
-
-# Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
-
-# Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @(
-	'ThrowException.ps1'
-	,
-	'ThrowDataServiceClientException.ps1'
-)
-
-# Functions to export from this module
-FunctionsToExport = '*'
-
-# Cmdlets to export from this module
-CmdletsToExport = '*'
-
-# Variables to export from this module
-VariablesToExport = '*'
-
-# Aliases to export from this module
-AliasesToExport = '*'
-
-# List of all modules packaged with this module.
-# ModuleList = @()
-
-# List of all files packaged with this module
-FileList = @(
-	'biz.dfch.PS.Pester.Assertions.xml'
-	,
-	'LICENSE'
-	,
-	'NOTICE'
-	,
-	'README.md'
-	,
-	'Import-Module.ps1'
-)
-
-# Private data to pass to the module specified in RootModule/ModuleToProcess
-PrivateData = @{
-	'MODULEVAR' = 'biz_dfch_PS_Pester_Assertions'
-	;
-	'LicenseUri' = 'https://github.com/dfch/biz.dfch.PS.Pester.Assertions/blob/master/LICENSE'
-}
-
-# HelpInfo URI of this module
-HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
-
-# Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
-# DefaultCommandPrefix = ''
+	}
 
 }
 
@@ -131,11 +101,12 @@ HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
 # limitations under the License.
 #
 
+
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUz2lS8rY/kLt3R9NNw7QFO2nu
-# QnCgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUNdCEqGQbl37W0G7lLP9JkxAC
+# J1ygghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -234,26 +205,26 @@ HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSwBcgPsk8BCsYZ
-# Izu2fwJ5Sc9fPTANBgkqhkiG9w0BAQEFAASCAQAyH7ZHtVebApKz+YfTyGhDXVDd
-# umb56T343X8AiSag0S6IN7LlJZw2IVuUimMZc/fULzBot7FGNys61Kmo7YuMcDdM
-# 11BXh4wugGCP28qvluMLAGzHAI2bCS2vQWhTCNbTwmUkMLs175zevPyhUx1asyMt
-# CNQxtTn1txGaIeh/VWrY/ETBCO387VywKgkAoEVon8sy3Ny0neabVlq1RO0bfWFK
-# fg6HwexR3KY61j6t98YnseDig37Q44Qq/qkyFMCj/8IkPHWMkWJxihE5r8eX9v1e
-# ikVMVC8uffKP+jmWZgtRvEgHvohJdz50t2jded9wAomumq+tsULDFnmFKf9XoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQEu1EKAO3fXH0I
+# hkSXRVEu1dZd0jANBgkqhkiG9w0BAQEFAASCAQB9vmZPFNi/Qxe/mdF/u43Br/w6
+# eomcWZmN7fn9J7EiSqdd6cxemRXGv45lcBjokKSw+I+dL4K7xa9V/mHAu54WbEXa
+# bH9/E+zci6VTpo/wGO3z8kbdCzSvPYvm8qWiWr4LhK7JQ6hT+66m2S58glPCGs7o
+# 065ut8wnDNIj2qOa/xovoABEJZcUaFQ6sg49TRe1UloqAqKoNGVoVFkCOIdgotuH
+# Nt5AVDeBbJVNfjtg1POeUm6CPTPd9C/Vn/aREwAHkGUS2Ak8i+b+4UxhiNOVip/s
+# aWAsDA/BaTyX9bTqC8yqsEnbH1tpmxcc+yxiEZJtyYsSoPv9sN5rXx+B5mL6oYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcwNjE1MDYxM1owIwYJKoZIhvcNAQkEMRYEFA6U+/zccASoKQHDsxCKHklSirUL
+# MDcwNjEzNTUwOFowIwYJKoZIhvcNAQkEMRYEFNBcwm67bUINJUoMyf77YiVm78k5
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBx/++Z2YGC+2SvXbEG
-# P2jBYy+K9s1Y0T3qmUziSmr34QlFkZdVb6Dk9fYAOT2zCSrTI+sG9xgYuueXahZL
-# tSUylOdF7xBemRXjlBo1FTgU+ATRzqs4M5mucta5cWZ584rtAKriDh0Hfbx3F/up
-# wVgBXHZB5r1xW7OY1pZAi/rK7JkeqsQte2jsLV0GvqnDauCJo+bjlh2wbP3ZRKyx
-# VIRyIOHIOk4eXjVZSbqGcT85bsU2bdEc1IzI7Bv2EhBTWOuAksh2GH1yyLqiVOxZ
-# UV0d0S/FdXgva6/HInag/UAYg33GUFUzlFsswn3pZNwAxaO+eZ6Gq89RDsqzMb6t
-# oepu
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBiVKtbaN7ZpEkjWiDr
+# 1nY+5Q/4ouceR4a4nsfQzc8iNDynirKGWcIfoy/PtdP8bqcparvFRO0bZwnAjfE4
+# 6gBUWXzeSn+IMkrJJ6iAZkzMqKUhwe60puzE/Nu/uqLKcXIjaRsBuYJgsgQRR57J
+# bzJtECHNKsMLye+kau0K16x8X04XRkv+iiLsRZvQ1mDLuqQqVgMVSP77sdcO4vrz
+# USJ+loR2d6aAMcU4A5YTtawWtVTgktYBM6evPY94c048EWK1k4CFgsasSPMIGhp9
+# EYml+SXKGRTDBRWaZAaCg+ZmShXdQjNtQnJLrQvo076iLUuj55EBoxDevhxouqir
+# KQv6
 # SIG # End signature block

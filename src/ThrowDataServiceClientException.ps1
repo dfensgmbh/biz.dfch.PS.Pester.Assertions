@@ -1,119 +1,166 @@
-# Module manifest for module 'biz.dfch.PS.Pester.Assertions'
+﻿function PesterThrowDataServiceClientException {
+<#
+.SYNOPSIS
+Tests the actual exception for a DataServiceClientException.
 
-@{
+.DESCRIPTION
+Tests the actual exception for a DataServiceClientException.
 
-# Script module or binary module file associated with this manifest.
-RootModule = 'biz.dfch.PS.Pester.Assertions.psm1'
+This Cmdlet is used inside a Pester test as a custom Pester assertion.
 
-# Version number of this module.
-ModuleVersion = '1.0.2.20160707'
+.INPUTS
+The inputs are defined by the Pester testing framework. See this link for 
+details and explanation: http://d.evops.co/?p=468.
 
-# ID used to uniquely identify this module
-GUID = 'a4e07467-4a8e-4ec9-be7f-149f0c08633c'
+.OUTPUTS
+The Cmdlet returns a Boolean (or throw).
 
-# Author of this module
-Author = 'Ronald Rink'
+.EXAMPLE
+# This script block will throw a DataServiceClientException with a 
+# StatusCode of 500. The assertion tests for this StatusCode and will 
+# therefore succeed.
 
-# Company or vendor of this module
-CompanyName = 'd-fens GmbH'
+PS > { $svc.Core.Nodes.AddQueryOption('$top', -1) } | Should ThrowDataServiceClientException @{StatusCode = 500}
 
-# Copyright statement for this module
-Copyright = '(c) 2016 d-fens GmbH. Distributed under Apache 2.0 license.'
+.EXAMPLE
+# This script block will throw a DataServiceClientException with a 
+# Message containing 'Limit must have a non-negative value'. The 
+# assertion tests for this Message as a regular expression and will 
+# therefore succeed.
 
-# Description of the functionality provided by this module
-Description = 'This PowerShell module contains Cmdlets to perform various actions and utilties/convenience functions such as string conversion and formatting.'
+PS > { $svc.Core.Nodes.AddQueryOption('$top', -1) } | Should ThrowDataServiceClientException @{Message = 'Limit.must.have.a.non\-negative.value'}
 
-# Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '3.0'
+.LINK
+Online Version: http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowDataServiceClientException/
 
-# Name of the Windows PowerShell host required by this module
-# PowerShellHostName = ''
+.NOTES
+See module manifest for required software versions and dependencies at: 
+http://dfch.biz/biz/dfch/PS/Pester/Assertions/biz.dfch.PS.Pester.Assertions.psd1/
 
-# Minimum version of the Windows PowerShell host required by this module
-# PowerShellHostVersion = ''
 
-# Minimum version of the .NET Framework required by this module
-DotNetFrameworkVersion = '4.5'
-
-# Minimum version of the common language runtime (CLR) required by this module
-# CLRVersion = ''
-
-# Processor architecture (None, X86, Amd64) required by this module
-# ProcessorArchitecture = ''
-
-# Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @(
-	'biz.dfch.PS.System.Logging'
+#>
+[CmdletBinding(
+	SupportsShouldProcess = $false
 	,
-	'biz.dfch.PS.System.Utilities'
+	ConfirmImpact = 'Low'
 	,
-	'Pester'
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowDataServiceClientException/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
 )
 
-# Assemblies that must be loaded prior to importing this module
-RequiredAssemblies = @(
+	[string] $fn = $MyInvocation.MyCommand.Name;
+
+	Contract-Requires ($Expected -is [Hashtable])
+	
+	Log-Debug $fn ($Expected | Out-String);
+	
+	$er = $null;
+	try
+	{
+		Invoke-Command -ScriptBlock $value;
+	}
+	catch
+	{
+		$er = $_;
+	}
+
+	if(!$er)
+	{
+		throw ("Test was supposed to throw exception, but was not thrown. '{0}'" -f ($Expected | Out-String));
+	}
+
+	$exDataServiceClientException = @{'InnerException' = $er.Exception};
+	
+	while($exDataServiceClientException.InnerException)
+	{
+		$exDataServiceClientException = $exDataServiceClientException.InnerException;
+		if($exDataServiceClientException -is [System.Data.Services.Client.DataServiceClientException])
+		{
+			break;
+		}
+	}
+	
+	if($exDataServiceClientException -isnot [System.Data.Services.Client.DataServiceClientException])
+	{
+		$exTypeName = '';
+		if($exDataServiceClientException)
+		{
+			$exTypeName = $exDataServiceClientException.GetType().FullName;
+		}
+		throw ("Test was supposed to throw DataServiceClientException, but was not thrown. '{0}'" -f $exTypeName);
+	}
+	
+	$result = $true;
+	if($expected.ContainsKey('StatusCode'))
+	{
+		$result = $result -And ($exDataServiceClientException.StatusCode -eq ($expected.StatusCode -as [int]));
+	}
+	
+	if($expected.ContainsKey('Message'))
+	{
+		$result = $result -And $exDataServiceClientException.Message -match $expected.Message;
+	}
+
+	return $result;
+
+} # function
+
+function PesterThrowDataServiceClientExceptionFailureMessage {
+[CmdletBinding(
+	SupportsShouldProcess = $false
+	,
+	ConfirmImpact = 'Low'
+	,
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowDataServiceClientExceptionFailureMessage/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
 )
 
-# Script files (.ps1) that are run in the caller's environment prior to importing this module.
-ScriptsToProcess = @(
-	'Import-Module.ps1'
+	[string] $fn = $MyInvocation.MyCommand.Name;
+
+	Contract-Requires ($Expected -is [Hashtable])
+
+	$message = "Test was expected to throw DataServiceClientException, but was not thrown with specified values.";
+	return $message;
+
+} # function
+
+function NotPesterThrowDataServiceClientExceptionFailureMessage {
+[CmdletBinding(
+	SupportsShouldProcess = $false
+	,
+	ConfirmImpact = 'Low'
+	,
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/NotThrowDataServiceClientExceptionFailureMessage/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
 )
 
-# Type files (.ps1xml) to be loaded when importing this module
-# TypesToProcess = @()
+	[string] $fn = $MyInvocation.MyCommand.Name;
 
-# Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+	Contract-Requires ($Expected -is [Hashtable])
 
-# Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @(
-	'ThrowException.ps1'
-	,
-	'ThrowDataServiceClientException.ps1'
-)
+	$message = "Test was not expected to throw DataServiceClientException, but was actually thrown.";
+	return $message;
 
-# Functions to export from this module
-FunctionsToExport = '*'
+} # function
 
-# Cmdlets to export from this module
-CmdletsToExport = '*'
-
-# Variables to export from this module
-VariablesToExport = '*'
-
-# Aliases to export from this module
-AliasesToExport = '*'
-
-# List of all modules packaged with this module.
-# ModuleList = @()
-
-# List of all files packaged with this module
-FileList = @(
-	'biz.dfch.PS.Pester.Assertions.xml'
-	,
-	'LICENSE'
-	,
-	'NOTICE'
-	,
-	'README.md'
-	,
-	'Import-Module.ps1'
-)
-
-# Private data to pass to the module specified in RootModule/ModuleToProcess
-PrivateData = @{
-	'MODULEVAR' = 'biz_dfch_PS_Pester_Assertions'
-	;
-	'LicenseUri' = 'https://github.com/dfch/biz.dfch.PS.Pester.Assertions/blob/master/LICENSE'
-}
-
-# HelpInfo URI of this module
-HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
-
-# Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
-# DefaultCommandPrefix = ''
-
-}
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowDataServiceClientException; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowDataServiceClientExceptionFailureMessage; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowDataServiceClientExceptionFailureMessage; } 
 
 #
 # Copyright 2016 d-fens GmbH
@@ -134,8 +181,8 @@ HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUz2lS8rY/kLt3R9NNw7QFO2nu
-# QnCgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUJwpfb4exyzoAylVkyZY2D4Ph
+# CaqgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -234,26 +281,26 @@ HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSwBcgPsk8BCsYZ
-# Izu2fwJ5Sc9fPTANBgkqhkiG9w0BAQEFAASCAQAyH7ZHtVebApKz+YfTyGhDXVDd
-# umb56T343X8AiSag0S6IN7LlJZw2IVuUimMZc/fULzBot7FGNys61Kmo7YuMcDdM
-# 11BXh4wugGCP28qvluMLAGzHAI2bCS2vQWhTCNbTwmUkMLs175zevPyhUx1asyMt
-# CNQxtTn1txGaIeh/VWrY/ETBCO387VywKgkAoEVon8sy3Ny0neabVlq1RO0bfWFK
-# fg6HwexR3KY61j6t98YnseDig37Q44Qq/qkyFMCj/8IkPHWMkWJxihE5r8eX9v1e
-# ikVMVC8uffKP+jmWZgtRvEgHvohJdz50t2jded9wAomumq+tsULDFnmFKf9XoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRJSGi0BRbQZ3cT
+# lMV8oqi8IH6ORzANBgkqhkiG9w0BAQEFAASCAQDAiIiAV18nkfjFwBOHgF25GC+5
+# PpC+qDPmsdX7v7p6/9kt8ETmygWX2XRfwm7/Kq7fYCc77u0/HNEV4q0cBbTQkrIW
+# v8Av4UdwlAC2Zz2CBcWXv426MWF4eT+K9wPmmp62ZfeVYJmMLmI6ZsOa+965fr1U
+# tmmFmnG/DA0nMCILZYMpY7ejC0qwniHmfad4MtGog+oCVw6zENfr57ZAgetxDz6X
+# NrLyiRyPHvNbVo800/TqappvUl4cx2X1ZVaRBaoAFhLfWugSsf5V1CZlrcViAYRu
+# a+T6Jp+KMaVk+DpMcTrL5A6yd9tTBXjO2s5G5lfAyyUIt5p6IFmTZzyTbaVuoYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcwNjE1MDYxM1owIwYJKoZIhvcNAQkEMRYEFA6U+/zccASoKQHDsxCKHklSirUL
+# MDcwNjEzNTUwN1owIwYJKoZIhvcNAQkEMRYEFGlNRudr2Uuhy66nwGKOd0NRXzsH
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBx/++Z2YGC+2SvXbEG
-# P2jBYy+K9s1Y0T3qmUziSmr34QlFkZdVb6Dk9fYAOT2zCSrTI+sG9xgYuueXahZL
-# tSUylOdF7xBemRXjlBo1FTgU+ATRzqs4M5mucta5cWZ584rtAKriDh0Hfbx3F/up
-# wVgBXHZB5r1xW7OY1pZAi/rK7JkeqsQte2jsLV0GvqnDauCJo+bjlh2wbP3ZRKyx
-# VIRyIOHIOk4eXjVZSbqGcT85bsU2bdEc1IzI7Bv2EhBTWOuAksh2GH1yyLqiVOxZ
-# UV0d0S/FdXgva6/HInag/UAYg33GUFUzlFsswn3pZNwAxaO+eZ6Gq89RDsqzMb6t
-# oepu
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQCkFwtqHuvpcXcDjlQF
+# aJaGy0njxosVluepDToLxfJfho0Da7ToyWfsUtmYaaLgrZ+hiE2efbcOhMwHBNks
+# X9iDA1Y9w71jLoPcypbDkoSHeI4TiG+9aBjh/8f6YT0D1rd51WIUPYxduI2o2APl
+# 2floOJcOluvxnwh3KXNdRSK9pHdPlCGzsi6ukxyR5dKxcXmW3nNTOZ+R5NALVD4f
+# pJONvP9hgt9pgviQdpZUCLIClMxKaceOgL1KRwFs+SBiLKGGS1/ZaCG20C2WPK5x
+# 61Wbm6vc45YwHjkffqgIKF3gwwy1YxNn8TwdU7qIozm+R0bTwdKI9JJWlsB0I3BL
+# A3m+
 # SIG # End signature block
