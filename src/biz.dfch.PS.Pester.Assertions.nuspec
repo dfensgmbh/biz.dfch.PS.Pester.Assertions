@@ -26,6 +26,7 @@ Check the [Wiki](https://github.com/dfensgmbh/biz.dfch.PS.Pester.Assertions/wiki
         <releaseNotes>20160707
 
 * added ThrowException assertion
+* added ThrowDataServiceClientException assertion
 </releaseNotes>
         <copyright>(c) 2016 d-fens GmbH</copyright>
         <language>en-US</language>
@@ -40,10 +41,11 @@ Check the [Wiki](https://github.com/dfensgmbh/biz.dfch.PS.Pester.Assertions/wiki
 		<file src="..\LICENSE" target="tools\LICENSE" />
 		<file src="..\NOTICE" target="tools\NOTICE" />
 		<file src="..\README.md" target="tools\README.md" />
+        <file src="Import-Module.ps1" target="tools\Import-Module.ps1" />
         <file src="biz.dfch.PS.Pester.Assertions.psd1" target="tools\biz.dfch.PS.Pester.Assertions.psd1" />
         <file src="biz.dfch.PS.Pester.Assertions.psm1" target="tools\biz.dfch.PS.Pester.Assertions.psm1" />
         <file src="biz.dfch.PS.Pester.Assertions.xml" target="tools\biz.dfch.PS.Pester.Assertions.xml" />
         <file src="ThrowException.ps1" target="tools\ThrowException.ps1" />
-        <file src="Import-Module.ps1" target="tools\Import-Module.ps1" />
+        <file src="ThrowDataServiceClientException.ps1" target="tools\ThrowDataServiceClientException.ps1" />
     </files>
 </package>
