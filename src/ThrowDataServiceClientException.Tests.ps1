@@ -1,151 +1,89 @@
-﻿function PesterThrowException {
-<#
-.SYNOPSIS
-Tests the actual exception for a given exception.
+﻿
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
 
-.DESCRIPTION
-Tests the actual exception for a given exception.
+Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientException.Tests" {
 
-This Cmdlet is used inside a Pester test as a custom Pester assertion.
+	Mock Export-ModuleMember { return $null; }
 
-.INPUTS
-The inputs are defined by the Pester testing framework. See this link for 
-details and explanation: http://d.evops.co/?p=468.
+	# . "$here\$sut"
 
-.OUTPUTS
-The Cmdlet returns a Boolean.
+	Context "Test-ThrowDataServiceClientException" {
 
-.EXAMPLE
-# This script block will throw a 'System.DivideByZeroException'. The assertion 
-# matches for 'System.DivideByZeroException' and will therefore succeed.
+		It 'Warmup' -Test {
+		
+			$true | Should Be $true;
+		
+		}
+		
+		It 'AssertionExists' -Test {
+		
+			$result = Get-Command PesterThrowDataServiceClientException;
+			$result -is [System.Management.Automation.FunctionInfo];
+		
+		}
 
-PS > { 1 / 0 } | Should ThrowException System.DivideByZeroException;
+		It "GettingHelp-ShouldSucceed" -Test {
 
-.EXAMPLE
-# This script block will throw a 'System.DivideByZeroException'. The assertion 
-# matches for 'DivideByZeroException' (at the end of the exception type) and 
-# will therefore succeed.
+			Get-Help PesterThrowDataServiceClientException | Should Not Be $Null;
+		
+		}
+		
+		It 'TestForStatusCodeSucceeds' -Test {
+		
+			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
+			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
+			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+		
+			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500};
+		
+		}
 
-PS > { 1 / 0 } | Should ThrowException 'DivideByZeroException$';
+		It 'TestForMessageSucceeds' -Test {
 
-.EXAMPLE
-# This script block will throw a 'System.DivideByZeroException'. The assertion 
-# matches for 'DivideByZero' and will therefore succeed.
+			$expectedMessage = 'arbitrary-DataServiceClientException-message';
+			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException($expectedMessage, 500);
+			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException("arbitrary-DataServiceQueryException-message", $exDataServiceClientException);
+			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+		
+			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{Message = $expectedMessage};
+		
+		}
 
-PS > { 1 / 0 } | Should ThrowException DivideByZero;
+		It 'TestForStatusCodeAndMessageSucceeds' -Test {
 
-.EXAMPLE
-# This script block will throw a 'System.DivideByZeroException'. The assertion 
-# matches for 'CommandNotFoundException' and will therefore fail.
+			$expectedMessage = 'arbitrary-DataServiceClientException-message';
+			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException($expectedMessage, 500);
+			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException("arbitrary-DataServiceQueryException-message", $exDataServiceClientException);
+			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+		
+			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500; Message = $expectedMessage};
+		
+		}
 
-PS > { 1 / 0 } | Should ThrowException CommandNotFoundException;
+		It 'TestForUnexpectedStatusCodeIsSupposedToFail' -Test {
+		
+			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
+			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
+			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+		
+			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 400};
+		
+		}
 
-.LINK
-Online Version: http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowException/
+		It 'TestForUnexpectedStatusCodeAndMessageIsSupposedToFail' -Test {
+		
+			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
+			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
+			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+		
+			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500; Message = 'invalid-message'};
+		
+		}
 
-.NOTES
-See module manifest for required software versions and dependencies at: 
-http://dfch.biz/biz/dfch/PS/Pester/Assertions/biz.dfch.PS.Pester.Assertions.psd1/
-
-
-#>
-[CmdletBinding(
-	SupportsShouldProcess = $false
-	,
-	ConfirmImpact = 'Low'
-	,
-	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowException/'
-)]
-PARAM 
-(
-	$Value
-	,
-	$Expected
-)
-
-	[string] $fn = $MyInvocation.MyCommand.Name;
-
-	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
-	Contract-Assert (!!$expectedException)
-	
-	$hasExceptionOccurred = $false;
-	try
-	{
-		Invoke-Command -ScriptBlock $value;
 	}
-	catch
-	{
-		$er = $_;
-		$hasExceptionOccurred = $true;
-	}
 
-	if(!$hasExceptionOccurred)
-	{
-		throw "Test was supposed to throw exception '{0}', but was not thrown." -f $expectedException;
-	}
-
-	Contract-Assert (!!$er.Exception.InnerException)
-
-	$ex = $er.Exception.InnerException;
-	
-	$result = $ex.GetType().FullName -match $expectedException;
-	return $result;
-
-} # function
-
-function PesterThrowExceptionFailureMessage {
-[CmdletBinding(
-	SupportsShouldProcess = $false
-	,
-	ConfirmImpact = 'Low'
-	,
-	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowExceptionFailureMessage/'
-)]
-PARAM 
-(
-	$Value
-	,
-	$Expected
-)
-
-	[string] $fn = $MyInvocation.MyCommand.Name;
-
-	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
-	Contract-Assert (!!$expectedException)
-
-	$message = "Test was expected to throw exception of type '{0}', but was not thrown." -f $expectedException;
-	return $message;
-
-} # function
-
-function NotPesterThrowExceptionFailureMessage {
-[CmdletBinding(
-	SupportsShouldProcess = $false
-	,
-	ConfirmImpact = 'Low'
-	,
-	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/NotThrowExceptionFailureMessage/'
-)]
-PARAM 
-(
-	$Value
-	,
-	$Expected
-)
-
-	[string] $fn = $MyInvocation.MyCommand.Name;
-
-	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
-	Contract-Assert (!!$expectedException)
-
-	$message = "Test was not expected to throw exception of type '{0}', but was actually thrown." -f $expectedException;
-	return $message;
-
-} # function
-
-if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowException; } 
-if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowExceptionFailureMessage; } 
-if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowExceptionFailureMessage; } 
+}
 
 #
 # Copyright 2016 d-fens GmbH
@@ -163,11 +101,12 @@ if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowExcep
 # limitations under the License.
 #
 
+
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUJwpfb4exyzoAylVkyZY2D4Ph
-# CaqgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUOTDkKORf0ZkcDePl1xX24tXb
+# oUCgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -266,26 +205,26 @@ if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowExcep
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRJSGi0BRbQZ3cT
-# lMV8oqi8IH6ORzANBgkqhkiG9w0BAQEFAASCAQDAiIiAV18nkfjFwBOHgF25GC+5
-# PpC+qDPmsdX7v7p6/9kt8ETmygWX2XRfwm7/Kq7fYCc77u0/HNEV4q0cBbTQkrIW
-# v8Av4UdwlAC2Zz2CBcWXv426MWF4eT+K9wPmmp62ZfeVYJmMLmI6ZsOa+965fr1U
-# tmmFmnG/DA0nMCILZYMpY7ejC0qwniHmfad4MtGog+oCVw6zENfr57ZAgetxDz6X
-# NrLyiRyPHvNbVo800/TqappvUl4cx2X1ZVaRBaoAFhLfWugSsf5V1CZlrcViAYRu
-# a+T6Jp+KMaVk+DpMcTrL5A6yd9tTBXjO2s5G5lfAyyUIt5p6IFmTZzyTbaVuoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSZb0bqr/EF9zhD
+# lZoDwleohCYjljANBgkqhkiG9w0BAQEFAASCAQBs+ufgcr0Bxohc/uikPPL5bdnH
+# 2TDiWk2SimejhEm0BPtcN1bzF3iXRKBMJUloaAssCso4RBfwoLnUNmg+uDC8MUMY
+# 1ADEJ+ihNxw+K3QeSVMHr036K1M3QjVuvgcPdedINxmbCC1PSq1pZa8y6b2JHRqF
+# c0EP92N/43BElBzTFmkh1/quvg8jA/1/k5XCzEcoe5/2+GK2KHbENXb1w3g1t9rg
+# kFIc+0X5oIUaWvDyYCNoWIm/E1hRVMcPGTXvFZUZf5YYl4aoBq9Y0b0vPP7d2Xmg
+# gh32YQw/kMSbTPT9ZGU8ihV/MOAY+s2tHx0eau3RzcSDQNanPp0A/6w7kh0qoYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcwNzA3Mjc0NFowIwYJKoZIhvcNAQkEMRYEFGlNRudr2Uuhy66nwGKOd0NRXzsH
+# MDcwNzA3Mjc0NFowIwYJKoZIhvcNAQkEMRYEFOfM/XzRZXbJSFeKd3HKGxpxUtl2
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBRBZtRK4p4noLLaist
-# xpXJ8KKfW5X9Ucs7f0YCerf+dlRSy8CirEq+3LsNAKzJCkk5s4iitzF1Re0BNZLK
-# 9XJVs5Uxr+e5UP0cIRIDGaB0nGstlU6izA/yr80QwvntUkwtVSUAdqNEbCp0Ruq0
-# LdSrmBJ6BEX18YGTdxlgUnRqcmh9qByp7YG6g0+e/RF+4QHOzBUXB5VPZtq43IAL
-# EplAVy2J96Y4K9Rt6ZMhAvyTbG61yVv1knbGrcfmUXs3j5f0WUr0oJASXzGq91p7
-# ZJJ7mVQUxH08LvQaLIulGStdHXG0P90ZcyasqTSLlmS2Hbax+5oc6vHas5feWhUh
-# PDsn
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQCgwU3Kks5pdBtShLdx
+# bikcf87qEMIGXet9S3pajrrn4SEmRcYeoXuGeINf7NULTlqO5DyPiUqxogTfEHiX
+# u7knOgeLD5SQWhWfxmEyS98PSAvIlj9dcSLpnMl+yoM3JqK2PjBdRBWF3di0atMg
+# M8lBPuGYZB1Xn/LxOypk7Fc8Iv804MdZy/PUUht7QbVkH5X609LjMWpzJEXzHez+
+# iG98RXfhNAHckrMbsBZVjvr0IecAUaiGOu3ZEbYlyHVL+7ChBAQW3x59XvDdAVZA
+# Ye+PlmCPE8iFkf5ObTpgQ0R7rOgS6SHLH0jkDOezOF/swIDj1tKyLtfBpEtiRIAh
+# DVqe
 # SIG # End signature block

@@ -1,10 +1,10 @@
-﻿function PesterThrowException {
+﻿function PesterThrowDataServiceClientException {
 <#
 .SYNOPSIS
-Tests the actual exception for a given exception.
+Tests the actual exception for a DataServiceClientException.
 
 .DESCRIPTION
-Tests the actual exception for a given exception.
+Tests the actual exception for a DataServiceClientException.
 
 This Cmdlet is used inside a Pester test as a custom Pester assertion.
 
@@ -13,35 +13,25 @@ The inputs are defined by the Pester testing framework. See this link for
 details and explanation: http://d.evops.co/?p=468.
 
 .OUTPUTS
-The Cmdlet returns a Boolean.
+The Cmdlet returns a Boolean (or throw).
 
 .EXAMPLE
-# This script block will throw a 'System.DivideByZeroException'. The assertion 
-# matches for 'System.DivideByZeroException' and will therefore succeed.
+# This script block will throw a DataServiceClientException with a 
+# StatusCode of 500. The assertion tests for this StatusCode and will 
+# therefore succeed.
 
-PS > { 1 / 0 } | Should ThrowException System.DivideByZeroException;
-
-.EXAMPLE
-# This script block will throw a 'System.DivideByZeroException'. The assertion 
-# matches for 'DivideByZeroException' (at the end of the exception type) and 
-# will therefore succeed.
-
-PS > { 1 / 0 } | Should ThrowException 'DivideByZeroException$';
+PS > { $svc.Core.Nodes.AddQueryOption('$top', -1) } | Should ThrowDataServiceClientException @{StatusCode = 500}
 
 .EXAMPLE
-# This script block will throw a 'System.DivideByZeroException'. The assertion 
-# matches for 'DivideByZero' and will therefore succeed.
+# This script block will throw a DataServiceClientException with a 
+# Message containing 'Limit must have a non-negative value'. The 
+# assertion tests for this Message as a regular expression and will 
+# therefore succeed.
 
-PS > { 1 / 0 } | Should ThrowException DivideByZero;
-
-.EXAMPLE
-# This script block will throw a 'System.DivideByZeroException'. The assertion 
-# matches for 'CommandNotFoundException' and will therefore fail.
-
-PS > { 1 / 0 } | Should ThrowException CommandNotFoundException;
+PS > { $svc.Core.Nodes.AddQueryOption('$top', -1) } | Should ThrowDataServiceClientException @{Message = 'Limit.must.have.a.non\-negative.value'}
 
 .LINK
-Online Version: http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowException/
+Online Version: http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowDataServiceClientException/
 
 .NOTES
 See module manifest for required software versions and dependencies at: 
@@ -54,7 +44,7 @@ http://dfch.biz/biz/dfch/PS/Pester/Assertions/biz.dfch.PS.Pester.Assertions.psd1
 	,
 	ConfirmImpact = 'Low'
 	,
-	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowException/'
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowDataServiceClientException/'
 )]
 PARAM 
 (
@@ -65,10 +55,11 @@ PARAM
 
 	[string] $fn = $MyInvocation.MyCommand.Name;
 
-	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
-	Contract-Assert (!!$expectedException)
+	Contract-Requires ($Expected -is [Hashtable])
 	
-	$hasExceptionOccurred = $false;
+	Log-Debug $fn ($Expected | Out-String);
+	
+	$er = $null;
 	try
 	{
 		Invoke-Command -ScriptBlock $value;
@@ -76,30 +67,56 @@ PARAM
 	catch
 	{
 		$er = $_;
-		$hasExceptionOccurred = $true;
 	}
 
-	if(!$hasExceptionOccurred)
+	if(!$er)
 	{
-		throw "Test was supposed to throw exception '{0}', but was not thrown." -f $expectedException;
+		throw ("Test was supposed to throw exception, but was not thrown. '{0}'" -f ($Expected | Out-String));
 	}
 
-	Contract-Assert (!!$er.Exception.InnerException)
-
-	$ex = $er.Exception.InnerException;
+	$exDataServiceClientException = @{'InnerException' = $er.Exception};
 	
-	$result = $ex.GetType().FullName -match $expectedException;
+	while($exDataServiceClientException.InnerException)
+	{
+		$exDataServiceClientException = $exDataServiceClientException.InnerException;
+		if($exDataServiceClientException -is [System.Data.Services.Client.DataServiceClientException])
+		{
+			break;
+		}
+	}
+	
+	if($exDataServiceClientException -isnot [System.Data.Services.Client.DataServiceClientException])
+	{
+		$exTypeName = '';
+		if($exDataServiceClientException)
+		{
+			$exTypeName = $exDataServiceClientException.GetType().FullName;
+		}
+		throw ("Test was supposed to throw DataServiceClientException, but was not thrown. '{0}'" -f $exTypeName);
+	}
+	
+	$result = $true;
+	if($expected.ContainsKey('StatusCode'))
+	{
+		$result = $result -And ($exDataServiceClientException.StatusCode -eq ($expected.StatusCode -as [int]));
+	}
+	
+	if($expected.ContainsKey('Message'))
+	{
+		$result = $result -And $exDataServiceClientException.Message -match $expected.Message;
+	}
+
 	return $result;
 
 } # function
 
-function PesterThrowExceptionFailureMessage {
+function PesterThrowDataServiceClientExceptionFailureMessage {
 [CmdletBinding(
 	SupportsShouldProcess = $false
 	,
 	ConfirmImpact = 'Low'
 	,
-	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowExceptionFailureMessage/'
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowDataServiceClientExceptionFailureMessage/'
 )]
 PARAM 
 (
@@ -110,21 +127,20 @@ PARAM
 
 	[string] $fn = $MyInvocation.MyCommand.Name;
 
-	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
-	Contract-Assert (!!$expectedException)
+	Contract-Requires ($Expected -is [Hashtable])
 
-	$message = "Test was expected to throw exception of type '{0}', but was not thrown." -f $expectedException;
+	$message = "Test was expected to throw DataServiceClientException, but was not thrown with specified values.";
 	return $message;
 
 } # function
 
-function NotPesterThrowExceptionFailureMessage {
+function NotPesterThrowDataServiceClientExceptionFailureMessage {
 [CmdletBinding(
 	SupportsShouldProcess = $false
 	,
 	ConfirmImpact = 'Low'
 	,
-	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/NotThrowExceptionFailureMessage/'
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/NotThrowDataServiceClientExceptionFailureMessage/'
 )]
 PARAM 
 (
@@ -135,17 +151,16 @@ PARAM
 
 	[string] $fn = $MyInvocation.MyCommand.Name;
 
-	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
-	Contract-Assert (!!$expectedException)
+	Contract-Requires ($Expected -is [Hashtable])
 
-	$message = "Test was not expected to throw exception of type '{0}', but was actually thrown." -f $expectedException;
+	$message = "Test was not expected to throw DataServiceClientException, but was actually thrown.";
 	return $message;
 
 } # function
 
-if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowException; } 
-if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowExceptionFailureMessage; } 
-if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowExceptionFailureMessage; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowDataServiceClientException; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowDataServiceClientExceptionFailureMessage; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowDataServiceClientExceptionFailureMessage; } 
 
 #
 # Copyright 2016 d-fens GmbH
@@ -166,8 +181,8 @@ if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowExcep
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUJwpfb4exyzoAylVkyZY2D4Ph
-# CaqgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU3m0vFn647kfJIvY2fzL/ngZN
+# ab2gghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -266,26 +281,26 @@ if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowExcep
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRJSGi0BRbQZ3cT
-# lMV8oqi8IH6ORzANBgkqhkiG9w0BAQEFAASCAQDAiIiAV18nkfjFwBOHgF25GC+5
-# PpC+qDPmsdX7v7p6/9kt8ETmygWX2XRfwm7/Kq7fYCc77u0/HNEV4q0cBbTQkrIW
-# v8Av4UdwlAC2Zz2CBcWXv426MWF4eT+K9wPmmp62ZfeVYJmMLmI6ZsOa+965fr1U
-# tmmFmnG/DA0nMCILZYMpY7ejC0qwniHmfad4MtGog+oCVw6zENfr57ZAgetxDz6X
-# NrLyiRyPHvNbVo800/TqappvUl4cx2X1ZVaRBaoAFhLfWugSsf5V1CZlrcViAYRu
-# a+T6Jp+KMaVk+DpMcTrL5A6yd9tTBXjO2s5G5lfAyyUIt5p6IFmTZzyTbaVuoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSgrRbp5AfhQRVC
+# 4dfeTYj1gwZDVzANBgkqhkiG9w0BAQEFAASCAQBDu1PFfmjBhLn5BZ20+z0g0aML
+# 30bltavbGm4ZcTLL1xwFFwWCPh10FJ7VIcd5kkBrWMmN1vcH1zr3Wl+9RcYUr0IH
+# VX0quqmrQ5qdJ5c5+z4tBLYflStUhzfBB/z/UEbAbnMyJKE5QywThWHaA2HZQxmS
+# IUw74CPT7Oh1PJkGa9qO1yH4DVWuSoxu5LvC6DZdViMSsYBwXZdPb3iSQ+l2YY+L
+# SKVKVUdCcaq5N1F/gH8eAt77OTDGh/9BvUziASbhYtouRoVxcqK3rdCYGZF5gzOD
+# 5LaqcdQ1BwS4CDLly8UPetuUvXtAu8Frz4iPApNpGyg/14mB7gJAi9IQ8DsGoYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcwNzA3Mjc0NFowIwYJKoZIhvcNAQkEMRYEFGlNRudr2Uuhy66nwGKOd0NRXzsH
+# MDcwNzA3Mjc0NFowIwYJKoZIhvcNAQkEMRYEFKyC0X22nRhJpBC10ZA/h7lBT7mi
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBRBZtRK4p4noLLaist
-# xpXJ8KKfW5X9Ucs7f0YCerf+dlRSy8CirEq+3LsNAKzJCkk5s4iitzF1Re0BNZLK
-# 9XJVs5Uxr+e5UP0cIRIDGaB0nGstlU6izA/yr80QwvntUkwtVSUAdqNEbCp0Ruq0
-# LdSrmBJ6BEX18YGTdxlgUnRqcmh9qByp7YG6g0+e/RF+4QHOzBUXB5VPZtq43IAL
-# EplAVy2J96Y4K9Rt6ZMhAvyTbG61yVv1knbGrcfmUXs3j5f0WUr0oJASXzGq91p7
-# ZJJ7mVQUxH08LvQaLIulGStdHXG0P90ZcyasqTSLlmS2Hbax+5oc6vHas5feWhUh
-# PDsn
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBwJygvXsFPmM+3OUTr
+# ra5QBq36AwspJYGsIQzXCS4SIM0Xzp2biCGYuAT694gQvHYzfGPpI9OWfNsceQDS
+# VT/wOzrrKbQLXeCXZnrmUfjcXXZI63rC8EcBI96SlUzRY2AvD0irWt7QjObil24S
+# umqdlVFaYXJNwvxkiLTMoGCtIzVcmMqnh1qm1fl2s5xXgXCUl1WPXjlm/hEgkqDU
+# u4amzjk9UORZZjTFd1nkE0XVIJpYPzPejJeO+b/kFm/CfoYyepfE+Pnqawz/5YjB
+# 3XBg5xBB8n4wwRkYb+0YOf96hVc1H8GR0cf1k9V2G9c5CQMQvlYULkkgB3zFrcBV
+# FqIk
 # SIG # End signature block
