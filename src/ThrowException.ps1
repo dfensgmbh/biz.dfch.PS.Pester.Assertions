@@ -84,11 +84,18 @@ PARAM
 		throw "Test was supposed to throw exception '{0}', but was not thrown." -f $expectedException;
 	}
 
-	Contract-Assert (!!$er.Exception.InnerException)
-
-	$ex = $er.Exception.InnerException;
+	$ex = @{InnerException = $er.Exception};
+	while($ex)
+	{
+		$result = $ex.GetType().FullName -match $expectedException;
+		if($result)
+		{
+			break;
+		}
+		
+		$ex = $ex.InnerException;
+	}
 	
-	$result = $ex.GetType().FullName -match $expectedException;
 	return $result;
 
 } # function
@@ -166,8 +173,8 @@ if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowExcep
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUJwpfb4exyzoAylVkyZY2D4Ph
-# CaqgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUX7pPdkWwsYW+ImPcwOeB/EIw
+# JlGgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -266,26 +273,26 @@ if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowExcep
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRJSGi0BRbQZ3cT
-# lMV8oqi8IH6ORzANBgkqhkiG9w0BAQEFAASCAQDAiIiAV18nkfjFwBOHgF25GC+5
-# PpC+qDPmsdX7v7p6/9kt8ETmygWX2XRfwm7/Kq7fYCc77u0/HNEV4q0cBbTQkrIW
-# v8Av4UdwlAC2Zz2CBcWXv426MWF4eT+K9wPmmp62ZfeVYJmMLmI6ZsOa+965fr1U
-# tmmFmnG/DA0nMCILZYMpY7ejC0qwniHmfad4MtGog+oCVw6zENfr57ZAgetxDz6X
-# NrLyiRyPHvNbVo800/TqappvUl4cx2X1ZVaRBaoAFhLfWugSsf5V1CZlrcViAYRu
-# a+T6Jp+KMaVk+DpMcTrL5A6yd9tTBXjO2s5G5lfAyyUIt5p6IFmTZzyTbaVuoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSQM2u9DkjJZdCA
+# QIObVcZqccuXSjANBgkqhkiG9w0BAQEFAASCAQC8YQFnSilJtgbe03soqfx0dFJF
+# 7yHQJWZE1zyXxOshguxx12Pnv0ms+/kFvAj03buSj0BPrbuISTzGWYAvIP3awBab
+# K6CYXts18Eh8eXX3/oyMQiFwc6d6VFMKHYyPGwZBJCI2FwmUTuQ2NFxziPcRZwbO
+# 4tWznXND93THVbYZsO8pkvhcG9yzzs3NGAbXqis8X/PKJHJOWDsFoG2j17nKzZJO
+# vsYGXa/F2ZIWAOcZMLPaHl2hRS8HC5bE1VP3ax2S1pHWozgK0AFuqchcpOSJpgz8
+# 5O+n70CT3WTyiTCZV5K6AJFor6Vi9XSkhieOQ0kxBHZ6qC4piMiTjmmBF9mwoYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcxMDEyMTQwOFowIwYJKoZIhvcNAQkEMRYEFGlNRudr2Uuhy66nwGKOd0NRXzsH
+# MDcxMDEyMzMzN1owIwYJKoZIhvcNAQkEMRYEFJillmfsvfV0ffHqmGOHGQBvyUfy
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQAZ07TX2D2H0PMdQK11
-# UmzR8F7MF5PMRsUPkuD76Mvr8/iUtBKVpR6bP2sOrs7we5HCkjqeZu5+7R00rZDT
-# K5g8cBG9Rrex3lWeojW53dcHIEJxrv0rHXEnOIqJHx54kcIvwLlqFGDRd3J+FvgV
-# pcL9nj5cX160M6Pp/lj56pUvp2z+Kfwx+9Q1edtJHVshB1Wyx164Q0Ifr8lkNYXR
-# S7aYLBE8FgwspzSBXLgcJEq6rydNzrOlrW3vyEFAfKk0xhmejIjxiBVq1ZdgE8vn
-# zRUZs3alJlLgZFoRf3hWOIDIhh+o6uMBF+o1oj5Jio7t7sw4q606nieOegeXQ/qU
-# X70u
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBWb8AQe8bzWGVprnhy
+# ugR+ZxO7lINHoquASo3CQPmUAq+p2w8Y1nyDYpDMyiZ3Y3dgzm6wk9ShBZEDKEVK
+# e1MV3MSRQEZo+Qdh4+uC2k5/lPkitbc929tlrdQMfgyWGPS+0u71oDQ6z4OxHRuj
+# YuDVLJBgeJloJy1LbmROLmpX8Tk752Nt8UEhnt7D4Yn8uGid6EAsYDVmcDIzdQaq
+# uopVqQy3nHkEt+edLtohE+HzI4z25YpzdhXgfK2jGzRWDLPxRUxxO2oMfXTVuR4f
+# k+Eh7eaN/ayr9dPGKcodCOQVlyfQgy6QhpjNMFjb/zQO7S7fb2Melgf9jPyU0/ov
+# r/jn
 # SIG # End signature block
