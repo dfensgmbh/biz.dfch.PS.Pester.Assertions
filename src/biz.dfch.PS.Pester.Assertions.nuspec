@@ -48,5 +48,6 @@ Check the [Wiki](https://github.com/dfensgmbh/biz.dfch.PS.Pester.Assertions/wiki
         <file src="ThrowException.ps1" target="tools\ThrowException.ps1" />
         <file src="ThrowDataServiceClientException.ps1" target="tools\ThrowDataServiceClientException.ps1" />
         <file src="ThrowErrorId.ps1" target="tools\ThrowErrorId.ps1" />
+        <file src="ThrowCategory.ps1" target="tools\ThrowCategory.ps1" />
     </files>
 </package>
