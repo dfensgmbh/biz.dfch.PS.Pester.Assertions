@@ -6,7 +6,7 @@
 RootModule = 'biz.dfch.PS.Pester.Assertions.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1.0.20160710'
+ModuleVersion = '1.1.1.20160710'
 
 # ID used to uniquely identify this module
 GUID = 'a4e07467-4a8e-4ec9-be7f-149f0c08633c'

@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>biz.dfch.PS.Pester.Assertions</id>
-        <version>1.1.0</version>
+        <version>1.1.1</version>
         <title>biz.dfch.PS.Pester.Assertions</title>
         <authors>d-fens GmbH</authors>
         <owners>Ronald Rink</owners>
@@ -25,10 +25,10 @@ Check the [Wiki](https://github.com/dfensgmbh/biz.dfch.PS.Pester.Assertions/wiki
         <summary>This PowerShell module contains Cmdlets to add custom assertions to the Pester testing framework.</summary>
         <releaseNotes>20160710
 
-* added ThrowException assertion
 * added ThrowDataServiceClientException assertion
 * added ThrowErrorId assertion
 * added ThrowCategory assertion
+* update ThrowException assertion to also search in InnerExceptions
 </releaseNotes>
         <copyright>(c) 2016 d-fens GmbH</copyright>
         <language>en-US</language>
