@@ -21,6 +21,9 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 		
 		It 'AssertionExists' -Test {
 		
+			Remove-Module biz.dfch.PS.Pester.Assertions -ErrorAction:SilentlyContinue;
+			Import-Module biz.dfch.PS.Pester.Assertions
+		
 			$result = Get-Command PesterThrowDataServiceClientException;
 			$result -is [System.Management.Automation.FunctionInfo];
 		

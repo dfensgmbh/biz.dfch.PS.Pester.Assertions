@@ -21,7 +21,7 @@ Describe -Tags "Test-ThrowCategory.Tests" "Test-ThrowCategory.Tests" {
 		
 		It 'AssertionExists' -Test {
 		
-			Remove-Module biz.dfch.PS.Pester.Assertions
+			Remove-Module biz.dfch.PS.Pester.Assertions -ErrorAction:SilentlyContinue;
 			Import-Module biz.dfch.PS.Pester.Assertions
 		
 			$result = Get-Command PesterThrowCategory;

@@ -21,6 +21,9 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 		
 		It 'AssertionExists' -Test {
 		
+			Remove-Module biz.dfch.PS.Pester.Assertions -ErrorAction:SilentlyContinue;
+			Import-Module biz.dfch.PS.Pester.Assertions
+		
 			$result = Get-Command PesterThrowException;
 			$result -is [System.Management.Automation.FunctionInfo];
 		
