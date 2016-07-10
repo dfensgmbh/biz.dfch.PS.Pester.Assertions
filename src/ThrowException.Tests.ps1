@@ -56,15 +56,18 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 		
 		}
 
-		It 'ThrowExceptionWithUnexpectedExceptionIsSupposedToFail' -Test {
-		
-			{ 1 / 0 } | Should ThrowException CommandNotFoundException;
-		
-		}
-
 		It 'ThrowExceptionWithoutExpectedExceptionSucceeds' -Test {
 		
 			{ 1 / 0 } | Should Not ThrowException CommandNotFoundException;
+		
+		}
+	}
+	
+	Context "Tests-ThatAreSupposedToFail" {
+
+		It 'ThrowExceptionWithUnexpectedExceptionIsSupposedToFail' -Test {
+		
+			{ 1 / 0 } | Should ThrowException CommandNotFoundException;
 		
 		}
 
@@ -73,6 +76,9 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 			{ 1 * 0 } | Should ThrowException System.DivideByZeroException;
 		
 		}
+	}
+	
+	Context "Tests-ThatShouldSucceedButFailDueToPesterShortcomings" {
 
 		It 'ThrowExceptionWithoutExceptionShouldSucceedButActuallyFails' -Test {
 		

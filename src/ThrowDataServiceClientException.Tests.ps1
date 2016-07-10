@@ -64,6 +64,10 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 		
 		}
 
+	}
+	
+	Context "Tests-ThatAreSupposedToFail" {
+
 		It 'TestForUnexpectedStatusCodeIsSupposedToFail' -Test {
 		
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
@@ -83,7 +87,6 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500; Message = 'invalid-message'};
 		
 		}
-
 	}
 
 }
