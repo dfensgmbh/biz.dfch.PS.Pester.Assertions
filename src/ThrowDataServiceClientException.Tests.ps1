@@ -33,7 +33,7 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 		
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
 			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
-			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+			$exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
 		
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500};
 		
@@ -44,7 +44,7 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 			$expectedMessage = 'arbitrary-DataServiceClientException-message';
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException($expectedMessage, 500);
 			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException("arbitrary-DataServiceQueryException-message", $exDataServiceClientException);
-			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+			$exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
 		
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{Message = $expectedMessage};
 		
@@ -55,7 +55,7 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 			$expectedMessage = 'arbitrary-DataServiceClientException-message';
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException($expectedMessage, 500);
 			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException("arbitrary-DataServiceQueryException-message", $exDataServiceClientException);
-			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+			$exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
 		
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500; Message = $expectedMessage};
 		
@@ -65,7 +65,7 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 		
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
 			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
-			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+			$exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
 		
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 400};
 		
@@ -75,7 +75,7 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 		
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
 			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
-			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+			$exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
 		
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500; Message = 'invalid-message'};
 		
