@@ -6,6 +6,9 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 
 	Mock Export-ModuleMember { return $null; }
 
+	# we do not dot-source the files but run them from the module directly 
+	# as Pester will try to load the module implicitly 
+	# and it did not work otherwise
 	# . "$here\$sut"
 
 	Context "Test-ThrowDataServiceClientException" {
