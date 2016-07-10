@@ -6,6 +6,9 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 
 	Mock Export-ModuleMember { return $null; }
 
+	# we do not dot-source the files but run them from the module directly 
+	# as Pester will try to load the module implicitly 
+	# and it did not work otherwise
 	# . "$here\$sut"
 
 	Context "Test-ThrowDataServiceClientException" {
@@ -33,7 +36,7 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 		
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
 			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
-			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+			$exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
 		
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500};
 		
@@ -44,7 +47,7 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 			$expectedMessage = 'arbitrary-DataServiceClientException-message';
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException($expectedMessage, 500);
 			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException("arbitrary-DataServiceQueryException-message", $exDataServiceClientException);
-			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+			$exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
 		
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{Message = $expectedMessage};
 		
@@ -55,17 +58,21 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 			$expectedMessage = 'arbitrary-DataServiceClientException-message';
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException($expectedMessage, 500);
 			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException("arbitrary-DataServiceQueryException-message", $exDataServiceClientException);
-			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+			$exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
 		
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500; Message = $expectedMessage};
 		
 		}
 
+	}
+	
+	Context "Tests-ThatAreSupposedToFail" {
+
 		It 'TestForUnexpectedStatusCodeIsSupposedToFail' -Test {
 		
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
 			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
-			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+			$exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
 		
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 400};
 		
@@ -75,12 +82,11 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 		
 			$exDataServiceClientException = New-Object System.Data.Services.Client.DataServiceClientException("arbitrary-DataServiceClientException-message", 500);
 			$exDataServiceQueryException = New-Object System.Data.Services.Client.DataServiceQueryException('arbitrary-DataServiceQueryException-message', $exDataServiceClientException);
-			$exExtendedTypeSystemException = $exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
+			$exExtendedTypeSystemException = New-Object System.Management.Automation.ExtendedTypeSystemException("arbitrary-ExtendedTypeSystemException-message", $exDataServiceQueryException);
 		
 			{ throw $exExtendedTypeSystemException } | Should ThrowDataServiceClientException @{StatusCode = 500; Message = 'invalid-message'};
 		
 		}
-
 	}
 
 }
@@ -105,8 +111,8 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUOTDkKORf0ZkcDePl1xX24tXb
-# oUCgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU2oATwZ/aBPcBpEjCouLTirIj
+# N+egghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -205,26 +211,26 @@ Describe -Tags "ThrowDataServiceClientException.Tests" "ThrowDataServiceClientEx
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSZb0bqr/EF9zhD
-# lZoDwleohCYjljANBgkqhkiG9w0BAQEFAASCAQBs+ufgcr0Bxohc/uikPPL5bdnH
-# 2TDiWk2SimejhEm0BPtcN1bzF3iXRKBMJUloaAssCso4RBfwoLnUNmg+uDC8MUMY
-# 1ADEJ+ihNxw+K3QeSVMHr036K1M3QjVuvgcPdedINxmbCC1PSq1pZa8y6b2JHRqF
-# c0EP92N/43BElBzTFmkh1/quvg8jA/1/k5XCzEcoe5/2+GK2KHbENXb1w3g1t9rg
-# kFIc+0X5oIUaWvDyYCNoWIm/E1hRVMcPGTXvFZUZf5YYl4aoBq9Y0b0vPP7d2Xmg
-# gh32YQw/kMSbTPT9ZGU8ihV/MOAY+s2tHx0eau3RzcSDQNanPp0A/6w7kh0qoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQPeyiknq8t/cwL
+# uNmtnZCkKkOSqTANBgkqhkiG9w0BAQEFAASCAQB2dRWjS66WAh2WmaidcYdgpOSA
+# knFECC2bq6dA/+m6NQq3QSj8zFUzOhfFdPoluLIdZGhHOMv4mFj9j6r59Wd58LeT
+# 9RuOWf9msKjxUZb2fId3Giyy9/gn5hDzVLWghylzqJviTt9Eh0CWVcovvrfwpUGV
+# OZbadcLH81ke5pY3a5qGjx4ddQNQnfIfQnhRZurMPzkznk2vapK9QZIM3UUlg6zX
+# vy2hX7v4mdWMBC0EY9ACcPI4tLECJxmwbc9Wf3tiM5XLSsq/piykVJNg5G9icsQc
+# miQ+RErMiQE3XvXOeJKeHXrSSj+Iaow5X1NzLrS0VBAv5xtv8u4zx58M9IdPoYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcwNzA3Mjc0NFowIwYJKoZIhvcNAQkEMRYEFOfM/XzRZXbJSFeKd3HKGxpxUtl2
+# MDcxMDEyMTQwN1owIwYJKoZIhvcNAQkEMRYEFEV8EA9m24ONqaKrWvUyN6wFFMDn
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQCgwU3Kks5pdBtShLdx
-# bikcf87qEMIGXet9S3pajrrn4SEmRcYeoXuGeINf7NULTlqO5DyPiUqxogTfEHiX
-# u7knOgeLD5SQWhWfxmEyS98PSAvIlj9dcSLpnMl+yoM3JqK2PjBdRBWF3di0atMg
-# M8lBPuGYZB1Xn/LxOypk7Fc8Iv804MdZy/PUUht7QbVkH5X609LjMWpzJEXzHez+
-# iG98RXfhNAHckrMbsBZVjvr0IecAUaiGOu3ZEbYlyHVL+7ChBAQW3x59XvDdAVZA
-# Ye+PlmCPE8iFkf5ObTpgQ0R7rOgS6SHLH0jkDOezOF/swIDj1tKyLtfBpEtiRIAh
-# DVqe
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQCNpKMm5SWUxWjEsDi3
+# 1dY8s8aStQZwlGZxuGXZ/CVxG62TK+bkOtNueg4LASnvVUIW/aiY51AQW8tIP0B7
+# Ny3/QZ0LTBiwZVr0bJsmPYonc68mQeCp5j719aGte7kZEnZrMI8cMdjYg5tT0zXi
+# ioEYrsTgY/3SbuTmTqRua3rZ57j+38aOk12tpgkvyHB4ySvfcwnEBV25RLEad484
+# rQ90QIVwO7fdxXM9jmywXGX8hdbPRJlh0sMmLWqcm6kk10Or+JCIbDtDUgxnvDvj
+# b9EbqPWDt/fTJHXr4fSfNsowVLVI3/iLl6q0umX5b1hNi46r+D2/MvacGRpJiG1H
+# 8BVB
 # SIG # End signature block

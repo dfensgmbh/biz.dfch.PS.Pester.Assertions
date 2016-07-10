@@ -2,7 +2,7 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
 
-Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
+Describe -Tags "Test-ThrowCategory.Tests" "Test-ThrowCategory.Tests" {
 
 	Mock Export-ModuleMember { return $null; }
 
@@ -11,7 +11,7 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 	# and it did not work otherwise
 	# . "$here\$sut"
 
-	Context "Test-ThrowException" {
+	Context "Test-ThrowCategory" {
 
 		It 'Warmup' -Test {
 		
@@ -21,72 +21,146 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 		
 		It 'AssertionExists' -Test {
 		
-			$result = Get-Command PesterThrowException;
+			Remove-Module biz.dfch.PS.Pester.Assertions
+			Import-Module biz.dfch.PS.Pester.Assertions
+		
+			$result = Get-Command PesterThrowCategory;
 			$result -is [System.Management.Automation.FunctionInfo];
 		
 		}
 
 		It "GettingHelp-ShouldSucceed" -Test {
 
-			Get-Help PesterThrowException | Should Not Be $Null;
+			Get-Help PesterThrowCategory | Should Not Be $Null;
 		
 		}
 		
-		It 'ThrowExceptionWithFullQualifiedExpectedExceptionSucceeds' -Test {
+		It 'ThrowCategoryWithCategorySucceeds' -Test {
 		
-			{ 1 / 0 } | Should ThrowException System.DivideByZeroException;
+			$category = 'InvalidArgument';
+			$expectedCategory = $category;
+
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -o $Host "An error occurred"; throw $er; } | Should ThrowCategory $expectedCategory;
 		
 		}
 
-		It 'ThrowExceptionWithExpectedExceptionSucceeds' -Test {
+		It 'ThrowCategoryWithNotSpecifiedRuntimeExceptionSucceeds' -Test {
 		
-			{ 1 / 0 } | Should ThrowException DivideByZeroException;
+			$expectedCategory = 'NotSpecified';
+
+			{ 1 / 0; } | Should ThrowCategory $expectedCategory;
 		
 		}
 
-		It 'ThrowExceptionWithPartialExpectedExceptionSucceeds' -Test {
+		It 'ThrowCategoryWithCommandNotFoundExceptionSucceeds' -Test {
 		
-			{ 1 / 0 } | Should ThrowException 'DivideByZero';
+			$expectedCategory = 'ObjectNotFound';
+
+			{ Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowCategory $expectedCategory;
 		
 		}
 
-		It 'ThrowExceptionWithRegexExpectedExceptionSucceeds' -Test {
+		It 'ThrowCategoryWithPartialStringSucceeds' -Test {
 		
-			{ 1 / 0 } | Should ThrowException '\w+\.DivideByZeroException$';
+			$expectedCategory = 'NotFound';
+
+			{ Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowCategory $expectedCategory;
 		
 		}
 
-		It 'ThrowExceptionWithoutExpectedExceptionSucceeds' -Test {
+		It 'ThrowCategoryWithRegexCategorySucceeds' -Test {
 		
-			{ 1 / 0 } | Should Not ThrowException CommandNotFoundException;
+			$expectedCategory = 'NotFound$';
+			
+			{ $er = New-CustomErrorRecord -cat ObjectNotFound -o $Host "An error occurred"; throw $er; } | Should ThrowCategory $expectedCategory;
 		
 		}
 	}
 	
 	Context "Tests-ThatAreSupposedToFail" {
-
-		It 'ThrowExceptionWithUnexpectedExceptionIsSupposedToFail' -Test {
 		
-			{ 1 / 0 } | Should ThrowException CommandNotFoundException;
+		It 'ThrowCategoryWithOtherCategoryIsSupposedToFail' -Test {
+		
+			$expectedCategory = 'biz.dfch.PS.SomeOtherArbitrary.ErrorId';
+			
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -o $Host "An error occurred"; throw $er; } | Should ThrowCategory $expectedCategory;
+		
+		}
+
+		It 'ThrowCategoryWithoutExceptionIsSupposedToFail' -Test {
+
+			$expectedCategory = 'Arbitrary-Not-Throw-Category';
+			
+			{ 1 * 1; } | Should ThrowCategory $expectedCategory;
 		
 		}
 
-		It 'ThrowExceptionWithoutExceptionIsSupposedToFail' -Test {
+		It 'ThrowCategoryWithRegexCategoryIsSupposedToFail' -Test {
 		
-			{ 1 * 0 } | Should ThrowException System.DivideByZeroException;
+			$expectedCategory = '^InvalidArgument$';
+			
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -o $Host "An error occurred"; throw $er; } | Should Not ThrowCategory $expectedCategory;
 		
 		}
+
 	}
 	
 	Context "Tests-ThatShouldSucceedButFailDueToPesterShortcomings" {
 
-		It 'ThrowExceptionWithoutExceptionShouldSucceedButActuallyFails' -Test {
+		It 'ThrowCategoryWithoutErrorIdShouldSucceedButActuallyThrows' -Test {
 		
-			{ 1 * 0 } | Should Not ThrowException System.DivideByZeroException;
+			$expectedCategory = 'InvalidArgument';
+			
+			# this test will NOT work!
+			{ 1 * 1; } | Should Not ThrowCategory $expectedCategory;
 		
 		}
+
 	}
 
+	# these tests are only executed if the "Contract-*" Cmdlets are present
+	# see https://d-fens.ch/tag/biz-dfch-ps-system-logging/ for details
+	Context "Test-Contracts" {
+
+		It 'ThrowCategoryWithContractRequiresViolationSucceeds' -Test {
+			
+			$isCommandPresent = Get-Command Contract-Requires;
+			if(!$isCommandPresent)
+			{
+				Write-Warning "Skipping test due to missing 'Contract-Requires' Cmdlet.";
+			}
+			else
+			{
+				{ Contract-Requires ($null); } | Should ThrowCategory 'InvalidArgument';
+			}
+		}
+
+		It 'ThrowCategoryWithContractAssertViolationSucceeds' -Test {
+			
+			$isCommandPresent = Get-Command Contract-Requires;
+			if(!$isCommandPresent)
+			{
+				Write-Warning "Skipping test due to missing 'Contract-Requires' Cmdlet.";
+			}
+			else
+			{
+				{ Contract-Assert ($null); } | Should ThrowCategory 'InvalidResult';
+			}
+		}
+
+		It 'ThrowCategoryWithRegexContractAssertViolationSucceeds' -Test {
+			
+			$isCommandPresent = Get-Command Contract-Requires;
+			if(!$isCommandPresent)
+			{
+				Write-Warning "Skipping test due to missing 'Contract-Requires' Cmdlet.";
+			}
+			else
+			{
+				{ Contract-Assert ($null); } | Should ThrowCategory '^InvalidResult';
+			}
+		}
+	}
 }
 
 #
@@ -109,8 +183,8 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUEidvYUz11/9WDFdgBdV+Z0ec
-# nJ+gghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU8dpKAMUCiw5l0vuV6GKlF0Og
+# ixygghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -209,26 +283,26 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQpc9rjF4EVkvSW
-# q50Cpooz5y+1FzANBgkqhkiG9w0BAQEFAASCAQAsN5pNP/Jb/IwTj5PEuaHDre1d
-# T5KbOpD6rlV57sDF4j4XOawrv2KTYLW4P4fc22LjAC5McuD7I2kWuo07hUic6mwq
-# R55cJYIkbaOBEM0cagBnzjlXmsJJKXAOPIasWrVF4//x63fc2dLukVlbnuKj13Gi
-# ol+bfTMblLZe/im5HxNcF1l6vynyLC1zFfB8bhy7YTpQ96Ou2ins58QKDdyr0UT2
-# Ns9Gg7FllwaHaEMEQC/icCB+pAOT65IOxm6mzDRCzsvxaaU8zPZQ4oNH7YfKUqlB
-# KqSjfQ2jg2YXRPKFWYTG6zb7AbVGxdcAcgKi9UrAeVnAxd7Q7t0m4Doj8GiSoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRiJkg37f+EYMHX
+# Mj/QrnNxGBxXwTANBgkqhkiG9w0BAQEFAASCAQADVtrQZ+NLmidkk3LIU3IGykvv
+# VAWRUZPmuQ8cQOrdMjQnHUPq6+84FNzU5yX4hxbgUPdSl2Gm6WegcMcAv9wDBA2r
+# XTd831ZUORjs1lf3JicpdVHiKvhfGnNrRzs/D/ugdGQcK4CG/8o/thxZtgQKg8ml
+# imf0zIT8G7ZWqqDspovQYjPLhJnqYJTOgICq8GcEzrgy1xq/6in95Jn/UAnULDm1
+# yq/sM8dQKFHN/S4HFHnCL1ZM9P+Vfh68+j3oREy71qw+Nyx0r3jtMYqSnWjhGzIZ
+# 71GcYNbwWrYesD0awpNV3+UZLPKdYPndUuKfpkNAogeERYVSoErf9ngeVNMVoYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcxMDEyMTQwOVowIwYJKoZIhvcNAQkEMRYEFO8r/ww6/Wl0F/3H5pT2cvJwUYJg
+# MDcxMDEyMTQwNlowIwYJKoZIhvcNAQkEMRYEFD9B5MPRpeGBQZ+4sRTjxkbuzbVA
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBziH/SdCA/m7ZCypfR
-# POHNQsi84uSVl6TSQPyH5ctq0XrUF1lE6UNHb7Eqj6fX2r9gNQC1fZqrNN47XQCG
-# nBxjzOlHwpAmYdL7zChBwV+jEfB2D1+yP9Pw+QF+ljVRdy8YgBlhmcLvo3DCfJUg
-# GlGCgGlxM6sqqJNWphUmncLMFgUrx0eXmDpqiQ9P5JO+/keIsdiaSuESJvfaGgAu
-# snXxQ2agQcN6R5xWzex3xbaeXScDKPjWw1KdonmY7PpU0kL63PwfX9unQ2uCD52r
-# 758had0VeupiXHcXG+LTAqnTNzizNMuFIrWMvhQmLL10UDMUkEX35QBbqT7ZXdAW
-# l1uk
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBKOLppZFD+FC/QToDc
+# /6ox4fMf3HikLW0hNyUWlu3kT1pvXvuyk7HPE0iRDvVcqbuufFtJ4n5hJUSRPf63
+# bhgXJ7QTq1iIocmc47TSsslQftnN0aflZv1CwDObz8iz5GW+URErKGKkKwXW/HB6
+# PNmHoJ44haN55ZNfVk5vQltEA4yWlo5C3vhn7cIFUK7XdOJujGU4LxFwXNkxy89I
+# WAWDf7/okEnBvGOMycOXQMjxGG3FaqbQlkw3ZLL5zv2Md6hQ5Eo0fogLMlueqBu3
+# 5QawGbwtVne70OMeVt4RG/80L3vz6vzbcvmwwpxSp3+82sSJJRyNReJUhthWfv9L
+# LyXK
 # SIG # End signature block

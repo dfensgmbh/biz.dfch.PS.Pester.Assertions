@@ -1,93 +1,147 @@
-﻿
-$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
+﻿function PesterThrowCategory {
+<#
+.SYNOPSIS
+Tests the actual ErrorRecord for a given ErrorId.
 
-Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
+.DESCRIPTION
+Tests the actual ErrorRecord for a given ErrorId.
 
-	Mock Export-ModuleMember { return $null; }
+This Cmdlet is used inside a Pester test as a custom Pester assertion. 
+You can use a fully qualified error id or parts of it. All ErrorIds will 
+be matched as a regular expression against the actual ErrorId.
 
-	# we do not dot-source the files but run them from the module directly 
-	# as Pester will try to load the module implicitly 
-	# and it did not work otherwise
-	# . "$here\$sut"
+.INPUTS
+The inputs are defined by the Pester testing framework. See this link for 
+details and explanation: http://d.evops.co/?p=468.
 
-	Context "Test-ThrowException" {
+.OUTPUTS
+The Cmdlet returns a Boolean.
 
-		It 'Warmup' -Test {
-		
-			$true | Should Be $true;
-		
-		}
-		
-		It 'AssertionExists' -Test {
-		
-			$result = Get-Command PesterThrowException;
-			$result -is [System.Management.Automation.FunctionInfo];
-		
-		}
+.EXAMPLE
+# This assertion will check if the ScriptBlock threw an ErrorRecord with 
+# a Category of 'NotSpecified'.
+PS > { 1 / 0; } | Should ThrowCategory NotSpecified
 
-		It "GettingHelp-ShouldSucceed" -Test {
+.EXAMPLE
+# This assertion will check if the ScriptBlock threw an ErrorRecord with 
+# a Category of 'ObjectNotFound'.
+PS > { Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowCategory ObjectNotFound
 
-			Get-Help PesterThrowException | Should Not Be $Null;
-		
-		}
-		
-		It 'ThrowExceptionWithFullQualifiedExpectedExceptionSucceeds' -Test {
-		
-			{ 1 / 0 } | Should ThrowException System.DivideByZeroException;
-		
-		}
+.EXAMPLE
+# This assertion will check if the ScriptBlock threw an ErrorRecord with 
+# a Category that starts with 'ObjectNotFound' (via RegEx).
+PS > { Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowCategory '^ObjectNotFound';
 
-		It 'ThrowExceptionWithExpectedExceptionSucceeds' -Test {
-		
-			{ 1 / 0 } | Should ThrowException DivideByZeroException;
-		
-		}
+.EXAMPLE
+# This assertion will check if the ScriptBlock threw an ErrorRecord with 
+# a Category that contains 'NotFound' (via RegEx).
+PS > { Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowCategory 'NotFound';
 
-		It 'ThrowExceptionWithPartialExpectedExceptionSucceeds' -Test {
-		
-			{ 1 / 0 } | Should ThrowException 'DivideByZero';
-		
-		}
+.LINK
+Online Version: http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowCategory/
 
-		It 'ThrowExceptionWithRegexExpectedExceptionSucceeds' -Test {
-		
-			{ 1 / 0 } | Should ThrowException '\w+\.DivideByZeroException$';
-		
-		}
+.NOTES
+See module manifest for required software versions and dependencies at: 
+http://dfch.biz/biz/dfch/PS/Pester/Assertions/biz.dfch.PS.Pester.Assertions.psd1/
 
-		It 'ThrowExceptionWithoutExpectedExceptionSucceeds' -Test {
-		
-			{ 1 / 0 } | Should Not ThrowException CommandNotFoundException;
-		
-		}
+
+#>
+[CmdletBinding(
+	SupportsShouldProcess = $false
+	,
+	ConfirmImpact = 'Low'
+	,
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowCategory/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
+)
+
+	[string] $fn = $MyInvocation.MyCommand.Name;
+
+	Contract-Requires (!!$Value)
+	Contract-Requires (![string]::IsNullOrWhiteSpace($Expected))
+
+	$hasExceptionOccurred = $false;
+	try
+	{
+		Invoke-Command -ScriptBlock $Value;
 	}
-	
-	Context "Tests-ThatAreSupposedToFail" {
-
-		It 'ThrowExceptionWithUnexpectedExceptionIsSupposedToFail' -Test {
-		
-			{ 1 / 0 } | Should ThrowException CommandNotFoundException;
-		
-		}
-
-		It 'ThrowExceptionWithoutExceptionIsSupposedToFail' -Test {
-		
-			{ 1 * 0 } | Should ThrowException System.DivideByZeroException;
-		
-		}
-	}
-	
-	Context "Tests-ThatShouldSucceedButFailDueToPesterShortcomings" {
-
-		It 'ThrowExceptionWithoutExceptionShouldSucceedButActuallyFails' -Test {
-		
-			{ 1 * 0 } | Should Not ThrowException System.DivideByZeroException;
-		
-		}
+	catch
+	{
+		$er = $_;
+		$hasExceptionOccurred = $true;
 	}
 
-}
+	if(!$hasExceptionOccurred)
+	{
+		throw "Test was supposed to throw ErrorId '{0}', but was not thrown." -f $Expected;
+	}
+
+	$result = $er.CategoryInfo.Category -match $Expected;
+	return $result;
+
+} # function
+
+function PesterThrowCategoryFailureMessage {
+[CmdletBinding(
+	SupportsShouldProcess = $false
+	,
+	ConfirmImpact = 'Low'
+	,
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowCategoryFailureMessage/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
+)
+
+	[string] $fn = $MyInvocation.MyCommand.Name;
+
+	Contract-Requires (!!$Value)
+	Contract-Requires (![string]::IsNullOrWhiteSpace($Expected))
+
+	$message = "Test was expected to throw ErrorId '{0}', but was not thrown." -f $Expected;
+	return $message;
+
+} # function
+
+function NotPesterThrowCategoryFailureMessage {
+[CmdletBinding(
+	SupportsShouldProcess = $false
+	,
+	ConfirmImpact = 'Low'
+	,
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/NotThrowCategoryFailureMessage/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
+)
+
+	[string] $fn = $MyInvocation.MyCommand.Name;
+
+	Contract-Requires (!!$Value)
+	Contract-Requires (![string]::IsNullOrWhiteSpace($Expected))
+
+	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
+	Contract-Assert (!!$expectedException)
+
+	$message = "Test was not expected to throw ErrorId '{0}', but was actually thrown." -f $Expected;
+	return $message;
+
+} # function
+
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowCategory; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowCategoryFailureMessage; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowCategoryFailureMessage; } 
 
 #
 # Copyright 2016 d-fens GmbH
@@ -105,12 +159,11 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 # limitations under the License.
 #
 
-
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUEidvYUz11/9WDFdgBdV+Z0ec
-# nJ+gghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUENzKzvkNb07uLsKsEFQklMZ3
+# MVygghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -209,26 +262,26 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQpc9rjF4EVkvSW
-# q50Cpooz5y+1FzANBgkqhkiG9w0BAQEFAASCAQAsN5pNP/Jb/IwTj5PEuaHDre1d
-# T5KbOpD6rlV57sDF4j4XOawrv2KTYLW4P4fc22LjAC5McuD7I2kWuo07hUic6mwq
-# R55cJYIkbaOBEM0cagBnzjlXmsJJKXAOPIasWrVF4//x63fc2dLukVlbnuKj13Gi
-# ol+bfTMblLZe/im5HxNcF1l6vynyLC1zFfB8bhy7YTpQ96Ou2ins58QKDdyr0UT2
-# Ns9Gg7FllwaHaEMEQC/icCB+pAOT65IOxm6mzDRCzsvxaaU8zPZQ4oNH7YfKUqlB
-# KqSjfQ2jg2YXRPKFWYTG6zb7AbVGxdcAcgKi9UrAeVnAxd7Q7t0m4Doj8GiSoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTVi28mGPXre49G
+# gnuzI2aHMF/ZoTANBgkqhkiG9w0BAQEFAASCAQApNxMxxZJ3esroR8OSqmkWdKpP
+# pRrwOXP3uxgHoHJDLPt1/G4ePBjgpZ8uuxy0XT/VBD5lZR1n3jHIacSPHtzyMmnf
+# 4gDmch8kWgmQWJYPUmeQu2vRKS/RG+i4cIYXJ5JUjftmb1VWc663HSiW5fkdr1vn
+# fGWVLwwVCOVcE+0xqgy8tnmMT4nTU2wgIwO4xXWkuopAksslm1kVOjbAh8kFENly
+# 3nYxbm8H9DKkjROIKg74qBhV3p1NN8o7mpxrU+QoJU+UHx73v9ypKAP3TQbYZAzh
+# UR9sgZae13ELe5+1EwGRKm2TRdYR+99sxokcMt1JCIWAIzf+q+7wEyxKbn/ioYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcxMDEyMTQwOVowIwYJKoZIhvcNAQkEMRYEFO8r/ww6/Wl0F/3H5pT2cvJwUYJg
+# MDcxMDEyMTQwNVowIwYJKoZIhvcNAQkEMRYEFPc1TQDy/diQyKVhmamoKGwIdWHw
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBziH/SdCA/m7ZCypfR
-# POHNQsi84uSVl6TSQPyH5ctq0XrUF1lE6UNHb7Eqj6fX2r9gNQC1fZqrNN47XQCG
-# nBxjzOlHwpAmYdL7zChBwV+jEfB2D1+yP9Pw+QF+ljVRdy8YgBlhmcLvo3DCfJUg
-# GlGCgGlxM6sqqJNWphUmncLMFgUrx0eXmDpqiQ9P5JO+/keIsdiaSuESJvfaGgAu
-# snXxQ2agQcN6R5xWzex3xbaeXScDKPjWw1KdonmY7PpU0kL63PwfX9unQ2uCD52r
-# 758had0VeupiXHcXG+LTAqnTNzizNMuFIrWMvhQmLL10UDMUkEX35QBbqT7ZXdAW
-# l1uk
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQChgiEr/PpEjmesfRUC
+# /6zdlvrpLRQ+BXRgvJeCFmqRB9lER/GHs3AUilVk3MP4gt3sg74xCiReMnBdNb81
+# QrJ1OQxarGAbCn+VHn3jPXqdBvFVTBSz5MrRSK6nXI+xRtMGFc9i62cvqcOrSf1U
+# 71cyCrlU8COaCcYZVwlz9WiTslNvP2gS2OtzlvZKcDKVEy+FvTBuN/ke26igq68e
+# pfpNzZOUp8nlHEIuq+1hOwJaG9paG94Y42+UYj8w5IHzmISABttWiCir6QQcA2t0
+# Dh4hSKHdIQRl4EJZKWzG5Tlf2DUepe/XkUmGxZ4zNfmwjlJLqjimkFoBG2kyBVuh
+# l7dL
 # SIG # End signature block

@@ -2,7 +2,7 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
 
-Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
+Describe -Tags "Test-ThrowErrorId.Tests" "Test-ThrowErrorId.Tests" {
 
 	Mock Export-ModuleMember { return $null; }
 
@@ -11,7 +11,7 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 	# and it did not work otherwise
 	# . "$here\$sut"
 
-	Context "Test-ThrowException" {
+	Context "Test-ThrowErrorId" {
 
 		It 'Warmup' -Test {
 		
@@ -21,72 +21,160 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 		
 		It 'AssertionExists' -Test {
 		
-			$result = Get-Command PesterThrowException;
+			Remove-Module biz.dfch.PS.Pester.Assertions
+			Import-Module biz.dfch.PS.Pester.Assertions
+		
+			$result = Get-Command PesterThrowErrorId;
 			$result -is [System.Management.Automation.FunctionInfo];
 		
 		}
 
 		It "GettingHelp-ShouldSucceed" -Test {
 
-			Get-Help PesterThrowException | Should Not Be $Null;
+			Get-Help PesterThrowErrorId | Should Not Be $Null;
 		
 		}
 		
-		It 'ThrowExceptionWithFullQualifiedExpectedExceptionSucceeds' -Test {
+		It 'ThrowErrorIdWithFullQualifiedErrorIdSucceeds' -Test {
 		
-			{ 1 / 0 } | Should ThrowException System.DivideByZeroException;
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = $errorId;
+
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -id $errorId -o $Host "An error occurred"; throw $er; } | Should ThrowErrorId $expectedErrorId;
 		
 		}
 
-		It 'ThrowExceptionWithExpectedExceptionSucceeds' -Test {
+		It 'ThrowErrorIdWithRuntimeExceptionSucceeds' -Test {
 		
-			{ 1 / 0 } | Should ThrowException DivideByZeroException;
+			$expectedErrorId = 'RuntimeException';
+
+			{ 1 / 0; } | Should ThrowErrorId $expectedErrorId;
 		
 		}
 
-		It 'ThrowExceptionWithPartialExpectedExceptionSucceeds' -Test {
+		It 'ThrowErrorIdWithCommandNotFoundExceptionSucceeds' -Test {
 		
-			{ 1 / 0 } | Should ThrowException 'DivideByZero';
+			$expectedErrorId = 'CommandNotFoundException';
+
+			{ Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowErrorId $expectedErrorId;
 		
 		}
 
-		It 'ThrowExceptionWithRegexExpectedExceptionSucceeds' -Test {
+		It 'ThrowErrorIdWithPartialStringSucceeds' -Test {
 		
-			{ 1 / 0 } | Should ThrowException '\w+\.DivideByZeroException$';
+			$expectedErrorId = 'NotFound';
+
+			{ Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowErrorId $expectedErrorId;
 		
 		}
 
-		It 'ThrowExceptionWithoutExpectedExceptionSucceeds' -Test {
+		It 'ThrowErrorIdWithPartialQualifiedErrorIdSucceeds' -Test {
 		
-			{ 1 / 0 } | Should Not ThrowException CommandNotFoundException;
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = 'Arbitrary';
+			
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -id $errorId -o $Host "An error occurred"; throw $er; } | Should ThrowErrorId $expectedErrorId;
+		
+		}
+
+		It 'ThrowErrorIdWithRegexQualifiedErrorIdSucceeds' -Test {
+		
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = 'ErrorId$';
+			
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -id $errorId -o $Host "An error occurred"; throw $er; } | Should ThrowErrorId $expectedErrorId;
 		
 		}
 	}
 	
 	Context "Tests-ThatAreSupposedToFail" {
-
-		It 'ThrowExceptionWithUnexpectedExceptionIsSupposedToFail' -Test {
 		
-			{ 1 / 0 } | Should ThrowException CommandNotFoundException;
+		It 'ThrowErrorIdWithFullQualifiedErrorIdIsSupposedToFail' -Test {
+		
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = 'biz.dfch.PS.SomeOtherArbitrary.ErrorId';
+			
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -id $errorId -o $Host "An error occurred"; throw $er; } | Should ThrowErrorId $expectedErrorId;
+		
+		}
+
+		It 'ThrowErrorIdWithoutErrorIdIsSupposedToFail' -Test {
+
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = 'ErrorId$';
+			
+			{ 1 * 1; } | Should ThrowErrorId $expectedErrorId;
 		
 		}
 
-		It 'ThrowExceptionWithoutExceptionIsSupposedToFail' -Test {
+		It 'ThrowErrorIdWithRegexQualifiedErrorIdIsSupposedToFail' -Test {
 		
-			{ 1 * 0 } | Should ThrowException System.DivideByZeroException;
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = $errorId;
+			
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -id $errorId -o $Host "An error occurred"; throw $er; } | Should Not ThrowErrorId $expectedErrorId;
 		
 		}
+
 	}
 	
 	Context "Tests-ThatShouldSucceedButFailDueToPesterShortcomings" {
 
-		It 'ThrowExceptionWithoutExceptionShouldSucceedButActuallyFails' -Test {
+		It 'ThrowErrorIdWithoutErrorIdShouldSucceedButActuallyThrows' -Test {
 		
-			{ 1 * 0 } | Should Not ThrowException System.DivideByZeroException;
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = $errorId;
+			
+			# this test will NOT work!
+			{ 1 * 1; } | Should Not ThrowErrorId $expectedErrorId;
 		
 		}
+
 	}
 
+	# these tests are only executed if the "Contract-*" Cmdlets are present
+	# see https://d-fens.ch/tag/biz-dfch-ps-system-logging/ for details
+	Context "Test-Contracts" {
+
+		It 'ThrowErrorIdWithContractRequiresViolationSucceeds' -Test {
+			
+			$isCommandPresent = Get-Command Contract-Requires;
+			if(!$isCommandPresent)
+			{
+				Write-Warning "Skipping test due to missing 'Contract-Requires' Cmdlet.";
+			}
+			else
+			{
+				{ Contract-Requires ($null); } | Should ThrowErrorId 'Contract-Requires';
+			}
+		}
+
+		It 'ThrowErrorIdWithContractAssertViolationSucceeds' -Test {
+			
+			$isCommandPresent = Get-Command Contract-Requires;
+			if(!$isCommandPresent)
+			{
+				Write-Warning "Skipping test due to missing 'Contract-Requires' Cmdlet.";
+			}
+			else
+			{
+				{ Contract-Assert ($null); } | Should ThrowErrorId 'Contract-Assert';
+			}
+		}
+
+		It 'ThrowErrorIdWithContractViolationSucceeds' -Test {
+			
+			$isCommandPresent = Get-Command Contract-Requires;
+			if(!$isCommandPresent)
+			{
+				Write-Warning "Skipping test due to missing 'Contract-Requires' Cmdlet.";
+			}
+			else
+			{
+				{ Contract-Assert ($null); } | Should ThrowErrorId '^Contract';
+			}
+		}
+	}
 }
 
 #
@@ -109,8 +197,8 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUEidvYUz11/9WDFdgBdV+Z0ec
-# nJ+gghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUeeeosT6pCCE+iTDidG21Nx8m
+# IoWgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -209,26 +297,26 @@ Describe -Tags "Test-ThrowException.Tests" "Test-ThrowException.Tests" {
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQpc9rjF4EVkvSW
-# q50Cpooz5y+1FzANBgkqhkiG9w0BAQEFAASCAQAsN5pNP/Jb/IwTj5PEuaHDre1d
-# T5KbOpD6rlV57sDF4j4XOawrv2KTYLW4P4fc22LjAC5McuD7I2kWuo07hUic6mwq
-# R55cJYIkbaOBEM0cagBnzjlXmsJJKXAOPIasWrVF4//x63fc2dLukVlbnuKj13Gi
-# ol+bfTMblLZe/im5HxNcF1l6vynyLC1zFfB8bhy7YTpQ96Ou2ins58QKDdyr0UT2
-# Ns9Gg7FllwaHaEMEQC/icCB+pAOT65IOxm6mzDRCzsvxaaU8zPZQ4oNH7YfKUqlB
-# KqSjfQ2jg2YXRPKFWYTG6zb7AbVGxdcAcgKi9UrAeVnAxd7Q7t0m4Doj8GiSoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSYppg+eZbJmrQu
+# Z0R0paeg11BkvzANBgkqhkiG9w0BAQEFAASCAQCnbw42hhI4B3usGpf50evs2qPH
+# 33B3+FaTuqyprCexhRJtz67n3SN4RLhp6Dz34U6Ll92CFLpTtcNLEv30ZX3GhCTD
+# 8Ht6aG7eg1mrcX5hSzrwVnuNontp0KJ070vRGURcoUiGYtllDgBZVV/hNBdCuPip
+# y4dtum2b84Ok3h/CiIo7kac8Pm4FlEJlJUhgXsoh6JLptBflNHbWwz5KJW89yv/7
+# phgaMr8PAS1JuDZhbBu/UXZETj9WS2+5PpYHrR5DCOi2lVhYDkYy1AYtfUrUUHt/
+# yxA4WqmMFbi8nDpm5LJgl2kocTm6noR6ypy6qwdmQqQciRmL2VYhzD4PBJYxoYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcxMDEyMTQwOVowIwYJKoZIhvcNAQkEMRYEFO8r/ww6/Wl0F/3H5pT2cvJwUYJg
+# MDcxMDEyMTQwOFowIwYJKoZIhvcNAQkEMRYEFPRp3uv4t5/g//a5Jd0lIyeZ5wVg
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBziH/SdCA/m7ZCypfR
-# POHNQsi84uSVl6TSQPyH5ctq0XrUF1lE6UNHb7Eqj6fX2r9gNQC1fZqrNN47XQCG
-# nBxjzOlHwpAmYdL7zChBwV+jEfB2D1+yP9Pw+QF+ljVRdy8YgBlhmcLvo3DCfJUg
-# GlGCgGlxM6sqqJNWphUmncLMFgUrx0eXmDpqiQ9P5JO+/keIsdiaSuESJvfaGgAu
-# snXxQ2agQcN6R5xWzex3xbaeXScDKPjWw1KdonmY7PpU0kL63PwfX9unQ2uCD52r
-# 758had0VeupiXHcXG+LTAqnTNzizNMuFIrWMvhQmLL10UDMUkEX35QBbqT7ZXdAW
-# l1uk
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQAhiFwItNmcENkIelbq
+# i1KkGGFwU9Dvr7wkTJsnG6hdUZBAQ7F8eIJLq0tMaORiVa0pqy4qv8UhGvHYz4QI
+# 5SOJSWvgFVZ61/FR3JG03QI1xTvfhOOV/K2CC2YvXGsdY/ZnhBiGbpHwlfiCT3zA
+# o9vbjfSqGtZHd0q+LIglJ+ky+ZpuHkwNHalkLOUxHhFsFPmjIYBL3XOIksbs+jMP
+# mL/EoB7y5rQ/URe91CUaM6ZNd6AzJYdyZB95VHwAEPR04sMkduELsuBRSEthQ5J5
+# Rf5X8a5T6PCjjmVfXRAMMpKSkHu99xzF0Ey0TGFG9c/yTqfsSRJSGUSXlseVQRfO
+# 4WHZ
 # SIG # End signature block
