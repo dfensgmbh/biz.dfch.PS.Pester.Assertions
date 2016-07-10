@@ -1,120 +1,180 @@
-# Module manifest for module 'biz.dfch.PS.Pester.Assertions'
+﻿
+$here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
 
-@{
+Describe -Tags "Test-ThrowErrorId.Tests" "Test-ThrowErrorId.Tests" {
 
-# Script module or binary module file associated with this manifest.
-RootModule = 'biz.dfch.PS.Pester.Assertions.psm1'
+	Mock Export-ModuleMember { return $null; }
 
-# Version number of this module.
-ModuleVersion = '1.0.2.20160707'
+	# we do not dot-source the files but run them from the module directly 
+	# as Pester will try to load the module implicitly 
+	# and it did not work otherwise
+	# . "$here\$sut"
 
-# ID used to uniquely identify this module
-GUID = 'a4e07467-4a8e-4ec9-be7f-149f0c08633c'
+	Context "Test-ThrowErrorId" {
 
-# Author of this module
-Author = 'Ronald Rink'
+		It 'Warmup' -Test {
+		
+			$true | Should Be $true;
+		
+		}
+		
+		It 'AssertionExists' -Test {
+		
+			Remove-Module biz.dfch.PS.Pester.Assertions
+			Import-Module biz.dfch.PS.Pester.Assertions
+		
+			$result = Get-Command PesterThrowErrorId;
+			$result -is [System.Management.Automation.FunctionInfo];
+		
+		}
 
-# Company or vendor of this module
-CompanyName = 'd-fens GmbH'
+		It "GettingHelp-ShouldSucceed" -Test {
 
-# Copyright statement for this module
-Copyright = '(c) 2016 d-fens GmbH. Distributed under Apache 2.0 license.'
+			Get-Help PesterThrowErrorId | Should Not Be $Null;
+		
+		}
+		
+		It 'ThrowErrorIdWithFullQualifiedErrorIdSucceeds' -Test {
+		
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = $errorId;
 
-# Description of the functionality provided by this module
-Description = 'This PowerShell module contains Cmdlets to perform various actions and utilties/convenience functions such as string conversion and formatting.'
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -id $errorId -o $Host "An error occurred"; throw $er; } | Should ThrowErrorId $expectedErrorId;
+		
+		}
 
-# Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '3.0'
+		It 'ThrowErrorIdWithRuntimeExceptionSucceeds' -Test {
+		
+			$expectedErrorId = 'RuntimeException';
 
-# Name of the Windows PowerShell host required by this module
-# PowerShellHostName = ''
+			{ 1 / 0; } | Should ThrowErrorId $expectedErrorId;
+		
+		}
 
-# Minimum version of the Windows PowerShell host required by this module
-# PowerShellHostVersion = ''
+		It 'ThrowErrorIdWithCommandNotFoundExceptionSucceeds' -Test {
+		
+			$expectedErrorId = 'CommandNotFoundException';
 
-# Minimum version of the .NET Framework required by this module
-DotNetFrameworkVersion = '4.5'
+			{ Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowErrorId $expectedErrorId;
+		
+		}
 
-# Minimum version of the common language runtime (CLR) required by this module
-# CLRVersion = ''
+		It 'ThrowErrorIdWithPartialStringSucceeds' -Test {
+		
+			$expectedErrorId = 'NotFound';
 
-# Processor architecture (None, X86, Amd64) required by this module
-# ProcessorArchitecture = ''
+			{ Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowErrorId $expectedErrorId;
+		
+		}
 
-# Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @(
-	'biz.dfch.PS.System.Logging'
-	,
-	'biz.dfch.PS.System.Utilities'
-	,
-	'Pester'
-)
+		It 'ThrowErrorIdWithPartialQualifiedErrorIdSucceeds' -Test {
+		
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = 'Arbitrary';
+			
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -id $errorId -o $Host "An error occurred"; throw $er; } | Should ThrowErrorId $expectedErrorId;
+		
+		}
 
-# Assemblies that must be loaded prior to importing this module
-RequiredAssemblies = @(
-)
+		It 'ThrowErrorIdWithRegexQualifiedErrorIdSucceeds' -Test {
+		
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = 'ErrorId$';
+			
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -id $errorId -o $Host "An error occurred"; throw $er; } | Should ThrowErrorId $expectedErrorId;
+		
+		}
+	}
+	
+	Context "Tests-ThatAreSupposedToFail" {
+		
+		It 'ThrowErrorIdWithFullQualifiedErrorIdIsSupposedToFail' -Test {
+		
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = 'biz.dfch.PS.SomeOtherArbitrary.ErrorId';
+			
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -id $errorId -o $Host "An error occurred"; throw $er; } | Should ThrowErrorId $expectedErrorId;
+		
+		}
 
-# Script files (.ps1) that are run in the caller's environment prior to importing this module.
-ScriptsToProcess = @(
-	'Import-Module.ps1'
-)
+		It 'ThrowErrorIdWithoutErrorIdIsSupposedToFail' -Test {
 
-# Type files (.ps1xml) to be loaded when importing this module
-# TypesToProcess = @()
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = 'ErrorId$';
+			
+			{ 1 * 1; } | Should ThrowErrorId $expectedErrorId;
+		
+		}
 
-# Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+		It 'ThrowErrorIdWithRegexQualifiedErrorIdIsSupposedToFail' -Test {
+		
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = $errorId;
+			
+			{ $er = New-CustomErrorRecord -cat InvalidArgument -id $errorId -o $Host "An error occurred"; throw $er; } | Should Not ThrowErrorId $expectedErrorId;
+		
+		}
 
-# Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @(
-	'ThrowException.ps1'
-	,
-	'ThrowDataServiceClientException.ps1'
-	,
-	'ThrowErrorId.ps1'
-)
+	}
+	
+	Context "Tests-ThatShouldSucceedButFailDueToPesterShortcomings" {
 
-# Functions to export from this module
-FunctionsToExport = '*'
+		It 'ThrowErrorIdWithoutErrorIdShouldSucceedButActuallyThrows' -Test {
+		
+			$errorId = 'biz.dfch.PS.Arbitrary.ErrorId';
+			$expectedErrorId = $errorId;
+			
+			# this test will NOT work!
+			{ 1 * 1; } | Should Not ThrowErrorId $expectedErrorId;
+		
+		}
 
-# Cmdlets to export from this module
-CmdletsToExport = '*'
+	}
 
-# Variables to export from this module
-VariablesToExport = '*'
+	# these tests are only executed if the "Contract-*" Cmdlets are present
+	# see https://d-fens.ch/tag/biz-dfch-ps-system-logging/ for details
+	Context "Test-Contracts" {
 
-# Aliases to export from this module
-AliasesToExport = '*'
+		It 'ThrowErrorIdWithContractRequiresViolationSucceeds' -Test {
+			
+			$isCommandPresent = Get-Command Contract-Requires;
+			if(!$isCommandPresent)
+			{
+				Write-Warning "Skipping test due to missing 'Contract-Requires' Cmdlet.";
+			}
+			else
+			{
+				{ Contract-Requires ($null); } | Should ThrowErrorId 'Contract-Requires';
+			}
+		}
 
-# List of all modules packaged with this module.
-# ModuleList = @()
+		It 'ThrowErrorIdWithContractAssertViolationSucceeds' -Test {
+			
+			$isCommandPresent = Get-Command Contract-Requires;
+			if(!$isCommandPresent)
+			{
+				Write-Warning "Skipping test due to missing 'Contract-Requires' Cmdlet.";
+			}
+			else
+			{
+				{ Contract-Assert ($null); } | Should ThrowErrorId 'Contract-Assert';
+			}
+		}
 
-# List of all files packaged with this module
-FileList = @(
-	'biz.dfch.PS.Pester.Assertions.xml'
-	,
-	'LICENSE'
-	,
-	'NOTICE'
-	,
-	'README.md'
-	,
-	'Import-Module.ps1'
-)
-
-# Private data to pass to the module specified in RootModule/ModuleToProcess
-PrivateData = @{
-	'MODULEVAR' = 'biz_dfch_PS_Pester_Assertions'
-	;
-	'LicenseUri' = 'https://github.com/dfch/biz.dfch.PS.Pester.Assertions/blob/master/LICENSE'
-}
-
-# HelpInfo URI of this module
-HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
-
-# Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
-# DefaultCommandPrefix = ''
-
+		It 'ThrowErrorIdWithContractViolationSucceeds' -Test {
+			
+			$isCommandPresent = Get-Command Contract-Requires;
+			if(!$isCommandPresent)
+			{
+				Write-Warning "Skipping test due to missing 'Contract-Requires' Cmdlet.";
+			}
+			else
+			{
+				{ Contract-Assert ($null); } | Should ThrowErrorId '^Contract';
+			}
+		}
+	}
 }
 
 #
@@ -133,11 +193,12 @@ HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
 # limitations under the License.
 #
 
+
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUZ1udRaU0aMqZVkJsE3eYnOh/
-# 4u2gghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU7+AGwGuh1iSuRVqmzx0Qwt2L
+# R6WgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -236,26 +297,26 @@ HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRz4m7joXHOQkRx
-# cbPkLMK0/9AvxjANBgkqhkiG9w0BAQEFAASCAQDIlbjke8owQCNR4f1CYaqSzpHm
-# Ghcu4NN+/Jrfq7SPReCU0R6e6CTtDh9lk49Difw4z7tpyvFFOrnPF3t2fC7zMsdV
-# TzpKXcxO5LvlpY2nq6qtZmfF2ZGSTu93C/PHS+lmQvjhUjXdaPl15fCdgrIeK2LL
-# fljg4NnenEtttCpsqTMmjoy/XOp4mEHvX901yla2JItHjflAwIZYuxhbfLd4Qw95
-# xKE5Od7apaa6tHqDGIO7g4PBnTHMKUMkBVNaa/lmB0vdR4EFXPkrNUwyMjNsABik
-# AhdL94V0F3TEw4JCkDoL5Jlbe2G0OAozoSYTBIXLYcasoxHrhi6ZVk8LEEoyoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTnPI+qwurqbjsB
+# kv2Hhn77xU5v7jANBgkqhkiG9w0BAQEFAASCAQCuUKz0QJYez4HGAPE4JFuFZpyg
+# JykGV0VohiIPd42YjCw8YkBHpWKgsM8utqLUnWBAGZx33uNFU/Du76PCuIFUg4W3
+# LWWGdIElIOJ0ZuZBYcX5VpE/wgCIhL3WjMIYukrMd37n3+lnFsiKn0ZZBMQ54Osq
+# z2nGFpG6ETqzCZ1kNenzOYAVErfxIDsYDrKQSjPvMasBy4BRbKW45uXuMcMNhnFD
+# E9bdqNU08eEXBBjAGpneHo4MN8y4pvnV9Rw1owTq09xmOYtTTsmDlbb52WRaWTXv
+# teMvXKbXZfh3oOjXJvhvWo8MBenCwxo0mu8xWNSstJihdaXg1SOrnBMnfiiFoYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcwNzA3Mjc0MVowIwYJKoZIhvcNAQkEMRYEFCfZL+6TUzL18c+4VlT9zz+PKhWM
+# MDcxMDEwMzMyMlowIwYJKoZIhvcNAQkEMRYEFFmuVAsAL95YlMORdtX9g1KflybT
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQCAKZ9x9Z24jc/1OYqk
-# vpuUdW3OIUWyIobe+A+WAVO0N0OSZpyYNpoQESxExoRmavzGbwNid2smIoOem0il
-# aE4k/iNJz7O0Jy/TbYyvHSK7CVjQyWMT0SLbVDgUQyMgFIFTa2z8lXw+WDnstpM7
-# 07xwFXpCpnfcFkchlm+sYCHHFbVgJu+nc4gCoPaJ82ongWQ3wWZcaWLYS3JgCKle
-# yMZXItchfpK1N5hbbD90SMnaq5OxLAtSmAaNPHx4UkMxtqPAhL9Nijj7ZI+vwD/b
-# n4fGdz2/A65iXKc8rJlQF4uPz3kk5hy9YOUW83Gsf/oOGyUMklz7l7zazyxgefXq
-# ZGQK
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBcquu9x2DH8IpP2607
+# ON2WvIwFRBULqPb2wVlk3FLLTJSR7wouHSMP3bJFdpDjaFQ6dE2/qCHYtfdpTqSJ
+# kBXDHFZGNNIaGFB7SmLh9yKg0lCtCitO61smrXLVzBkPfXNJVHWhOeHnD6RHaclt
+# DXX9yhixLIw/j89PEROBy8v/wu3YpSO1S3UtcTaFobtR17MrDYr8XzIBfuZR5GGD
+# NYuqL7GLY8NUu7D8/qWvK5p+bvH8xsvkfbWAm345y5l/ckW7bGkP0JFwabtd+2YR
+# YkxCCiOLgjfXQvN5kYUOSrAa1kJIxU7q3wJjgzelcv7HsjBqf/u/KqRaT35/orMD
+# IQ2L
 # SIG # End signature block

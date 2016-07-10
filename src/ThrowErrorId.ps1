@@ -1,121 +1,147 @@
-# Module manifest for module 'biz.dfch.PS.Pester.Assertions'
+﻿function PesterThrowErrorId {
+<#
+.SYNOPSIS
+Tests the actual ErrorRecord for a given ErrorId.
 
-@{
+.DESCRIPTION
+Tests the actual ErrorRecord for a given ErrorId.
 
-# Script module or binary module file associated with this manifest.
-RootModule = 'biz.dfch.PS.Pester.Assertions.psm1'
+This Cmdlet is used inside a Pester test as a custom Pester assertion. 
+You can use a fully qualified error id or parts of it. All ErrorIds will 
+be matched as a regular expression against the actual ErrorId.
 
-# Version number of this module.
-ModuleVersion = '1.0.2.20160707'
+.INPUTS
+The inputs are defined by the Pester testing framework. See this link for 
+details and explanation: http://d.evops.co/?p=468.
 
-# ID used to uniquely identify this module
-GUID = 'a4e07467-4a8e-4ec9-be7f-149f0c08633c'
+.OUTPUTS
+The Cmdlet returns a Boolean.
 
-# Author of this module
-Author = 'Ronald Rink'
+.EXAMPLE
+# This assertion will check if the ScriptBlock threw an ErrorRecord with 
+# an ErrorId of 'RuntimeException'.
+PS > { 1 / 0; } | Should ThrowErrorId RuntimeException;
 
-# Company or vendor of this module
-CompanyName = 'd-fens GmbH'
+.EXAMPLE
+# This assertion will check if the ScriptBlock threw an ErrorRecord with 
+# an ErrorId of 'CommandNotFoundException'.
+PS > { Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowErrorId CommandNotFoundException;
 
-# Copyright statement for this module
-Copyright = '(c) 2016 d-fens GmbH. Distributed under Apache 2.0 license.'
+.EXAMPLE
+# This assertion will check if the ScriptBlock threw an ErrorRecord with 
+# an ErrorId that starts with 'CommandNotFound' (via RegEx).
+PS > { Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowErrorId '^CommandNotFound';
 
-# Description of the functionality provided by this module
-Description = 'This PowerShell module contains Cmdlets to perform various actions and utilties/convenience functions such as string conversion and formatting.'
+.EXAMPLE
+# This assertion will check if the ScriptBlock threw an ErrorRecord with 
+# an ErrorId that contains 'NotFound' (via RegEx).
+PS > { Invoke-InexistentCmdlet -InputObject $Host } | Should ThrowErrorId 'NotFound';
 
-# Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '3.0'
+.LINK
+Online Version: http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowErrorId/
 
-# Name of the Windows PowerShell host required by this module
-# PowerShellHostName = ''
+.NOTES
+See module manifest for required software versions and dependencies at: 
+http://dfch.biz/biz/dfch/PS/Pester/Assertions/biz.dfch.PS.Pester.Assertions.psd1/
 
-# Minimum version of the Windows PowerShell host required by this module
-# PowerShellHostVersion = ''
 
-# Minimum version of the .NET Framework required by this module
-DotNetFrameworkVersion = '4.5'
-
-# Minimum version of the common language runtime (CLR) required by this module
-# CLRVersion = ''
-
-# Processor architecture (None, X86, Amd64) required by this module
-# ProcessorArchitecture = ''
-
-# Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @(
-	'biz.dfch.PS.System.Logging'
+#>
+[CmdletBinding(
+	SupportsShouldProcess = $false
 	,
-	'biz.dfch.PS.System.Utilities'
+	ConfirmImpact = 'Low'
 	,
-	'Pester'
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowErrorId/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
 )
 
-# Assemblies that must be loaded prior to importing this module
-RequiredAssemblies = @(
+	[string] $fn = $MyInvocation.MyCommand.Name;
+
+	Contract-Requires (!!$Value)
+	Contract-Requires (![string]::IsNullOrWhiteSpace($Expected))
+
+	$hasExceptionOccurred = $false;
+	try
+	{
+		Invoke-Command -ScriptBlock $Value;
+	}
+	catch
+	{
+		$er = $_;
+		$hasExceptionOccurred = $true;
+	}
+
+	if(!$hasExceptionOccurred)
+	{
+		throw "Test was supposed to throw ErrorId '{0}', but was not thrown." -f $Expected;
+	}
+
+	$result = $er.FullyQualifiedErrorId -match $Expected;
+	return $result;
+
+} # function
+
+function PesterThrowErrorIdFailureMessage {
+[CmdletBinding(
+	SupportsShouldProcess = $false
+	,
+	ConfirmImpact = 'Low'
+	,
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/PesterThrowErrorIdFailureMessage/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
 )
 
-# Script files (.ps1) that are run in the caller's environment prior to importing this module.
-ScriptsToProcess = @(
-	'Import-Module.ps1'
+	[string] $fn = $MyInvocation.MyCommand.Name;
+
+	Contract-Requires (!!$Value)
+	Contract-Requires (![string]::IsNullOrWhiteSpace($Expected))
+
+	$message = "Test was expected to throw ErrorId '{0}', but was not thrown." -f $Expected;
+	return $message;
+
+} # function
+
+function NotPesterThrowErrorIdFailureMessage {
+[CmdletBinding(
+	SupportsShouldProcess = $false
+	,
+	ConfirmImpact = 'Low'
+	,
+	HelpURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/NotThrowErrorIdFailureMessage/'
+)]
+PARAM 
+(
+	$Value
+	,
+	$Expected
 )
 
-# Type files (.ps1xml) to be loaded when importing this module
-# TypesToProcess = @()
+	[string] $fn = $MyInvocation.MyCommand.Name;
 
-# Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+	Contract-Requires (!!$Value)
+	Contract-Requires (![string]::IsNullOrWhiteSpace($Expected))
 
-# Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-NestedModules = @(
-	'ThrowException.ps1'
-	,
-	'ThrowDataServiceClientException.ps1'
-	,
-	'ThrowErrorId.ps1'
-)
+	$expectedException = $Expected.Trim().TrimStart('[').TrimEnd(']');
+	Contract-Assert (!!$expectedException)
 
-# Functions to export from this module
-FunctionsToExport = '*'
+	$message = "Test was not expected to throw ErrorId '{0}', but was actually thrown." -f $Expected;
+	return $message;
 
-# Cmdlets to export from this module
-CmdletsToExport = '*'
+} # function
 
-# Variables to export from this module
-VariablesToExport = '*'
-
-# Aliases to export from this module
-AliasesToExport = '*'
-
-# List of all modules packaged with this module.
-# ModuleList = @()
-
-# List of all files packaged with this module
-FileList = @(
-	'biz.dfch.PS.Pester.Assertions.xml'
-	,
-	'LICENSE'
-	,
-	'NOTICE'
-	,
-	'README.md'
-	,
-	'Import-Module.ps1'
-)
-
-# Private data to pass to the module specified in RootModule/ModuleToProcess
-PrivateData = @{
-	'MODULEVAR' = 'biz_dfch_PS_Pester_Assertions'
-	;
-	'LicenseUri' = 'https://github.com/dfch/biz.dfch.PS.Pester.Assertions/blob/master/LICENSE'
-}
-
-# HelpInfo URI of this module
-HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
-
-# Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
-# DefaultCommandPrefix = ''
-
-}
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowErrorId; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function PesterThrowErrorIdFailureMessage; } 
+if($MyInvocation.ScriptName) { Export-ModuleMember -Function NotPesterThrowErrorIdFailureMessage; } 
 
 #
 # Copyright 2016 d-fens GmbH
@@ -136,8 +162,8 @@ HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
 # SIG # Begin signature block
 # MIIXDwYJKoZIhvcNAQcCoIIXADCCFvwCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUZ1udRaU0aMqZVkJsE3eYnOh/
-# 4u2gghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUJwpfb4exyzoAylVkyZY2D4Ph
+# CaqgghHCMIIEFDCCAvygAwIBAgILBAAAAAABL07hUtcwDQYJKoZIhvcNAQEFBQAw
 # VzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNV
 # BAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xMTA0
 # MTMxMDAwMDBaFw0yODAxMjgxMjAwMDBaMFIxCzAJBgNVBAYTAkJFMRkwFwYDVQQK
@@ -236,26 +262,26 @@ HelpInfoURI = 'http://dfch.biz/biz/dfch/PS/Pester/Assertions/'
 # MDAuBgNVBAMTJ0dsb2JhbFNpZ24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBH
 # MgISESENFrJbjBGW0/5XyYYR5rrZMAkGBSsOAwIaBQCgeDAYBgorBgEEAYI3AgEM
 # MQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwGCisGAQQB
-# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRz4m7joXHOQkRx
-# cbPkLMK0/9AvxjANBgkqhkiG9w0BAQEFAASCAQDIlbjke8owQCNR4f1CYaqSzpHm
-# Ghcu4NN+/Jrfq7SPReCU0R6e6CTtDh9lk49Difw4z7tpyvFFOrnPF3t2fC7zMsdV
-# TzpKXcxO5LvlpY2nq6qtZmfF2ZGSTu93C/PHS+lmQvjhUjXdaPl15fCdgrIeK2LL
-# fljg4NnenEtttCpsqTMmjoy/XOp4mEHvX901yla2JItHjflAwIZYuxhbfLd4Qw95
-# xKE5Od7apaa6tHqDGIO7g4PBnTHMKUMkBVNaa/lmB0vdR4EFXPkrNUwyMjNsABik
-# AhdL94V0F3TEw4JCkDoL5Jlbe2G0OAozoSYTBIXLYcasoxHrhi6ZVk8LEEoyoYIC
+# gjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRJSGi0BRbQZ3cT
+# lMV8oqi8IH6ORzANBgkqhkiG9w0BAQEFAASCAQDAiIiAV18nkfjFwBOHgF25GC+5
+# PpC+qDPmsdX7v7p6/9kt8ETmygWX2XRfwm7/Kq7fYCc77u0/HNEV4q0cBbTQkrIW
+# v8Av4UdwlAC2Zz2CBcWXv426MWF4eT+K9wPmmp62ZfeVYJmMLmI6ZsOa+965fr1U
+# tmmFmnG/DA0nMCILZYMpY7ejC0qwniHmfad4MtGog+oCVw6zENfr57ZAgetxDz6X
+# NrLyiRyPHvNbVo800/TqappvUl4cx2X1ZVaRBaoAFhLfWugSsf5V1CZlrcViAYRu
+# a+T6Jp+KMaVk+DpMcTrL5A6yd9tTBXjO2s5G5lfAyyUIt5p6IFmTZzyTbaVuoYIC
 # ojCCAp4GCSqGSIb3DQEJBjGCAo8wggKLAgEBMGgwUjELMAkGA1UEBhMCQkUxGTAX
 # BgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGlt
 # ZXN0YW1waW5nIENBIC0gRzICEhEh1pmnZJc+8fhCfukZzFNBFDAJBgUrDgMCGgUA
 # oIH9MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE2
-# MDcwNzA3Mjc0MVowIwYJKoZIhvcNAQkEMRYEFCfZL+6TUzL18c+4VlT9zz+PKhWM
+# MDcwNzA3Mjc0NFowIwYJKoZIhvcNAQkEMRYEFGlNRudr2Uuhy66nwGKOd0NRXzsH
 # MIGdBgsqhkiG9w0BCRACDDGBjTCBijCBhzCBhAQUY7gvq2H1g5CWlQULACScUCkz
 # 7HkwbDBWpFQwUjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
 # c2ExKDAmBgNVBAMTH0dsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gRzICEhEh
-# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQCAKZ9x9Z24jc/1OYqk
-# vpuUdW3OIUWyIobe+A+WAVO0N0OSZpyYNpoQESxExoRmavzGbwNid2smIoOem0il
-# aE4k/iNJz7O0Jy/TbYyvHSK7CVjQyWMT0SLbVDgUQyMgFIFTa2z8lXw+WDnstpM7
-# 07xwFXpCpnfcFkchlm+sYCHHFbVgJu+nc4gCoPaJ82ongWQ3wWZcaWLYS3JgCKle
-# yMZXItchfpK1N5hbbD90SMnaq5OxLAtSmAaNPHx4UkMxtqPAhL9Nijj7ZI+vwD/b
-# n4fGdz2/A65iXKc8rJlQF4uPz3kk5hy9YOUW83Gsf/oOGyUMklz7l7zazyxgefXq
-# ZGQK
+# 1pmnZJc+8fhCfukZzFNBFDANBgkqhkiG9w0BAQEFAASCAQBRBZtRK4p4noLLaist
+# xpXJ8KKfW5X9Ucs7f0YCerf+dlRSy8CirEq+3LsNAKzJCkk5s4iitzF1Re0BNZLK
+# 9XJVs5Uxr+e5UP0cIRIDGaB0nGstlU6izA/yr80QwvntUkwtVSUAdqNEbCp0Ruq0
+# LdSrmBJ6BEX18YGTdxlgUnRqcmh9qByp7YG6g0+e/RF+4QHOzBUXB5VPZtq43IAL
+# EplAVy2J96Y4K9Rt6ZMhAvyTbG61yVv1knbGrcfmUXs3j5f0WUr0oJASXzGq91p7
+# ZJJ7mVQUxH08LvQaLIulGStdHXG0P90ZcyasqTSLlmS2Hbax+5oc6vHas5feWhUh
+# PDsn
 # SIG # End signature block
