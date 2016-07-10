@@ -76,13 +76,13 @@ PARAM
 
 	$exDataServiceClientException = @{'InnerException' = $er.Exception};
 	
-	while($exDataServiceClientException.InnerException)
+	while($exDataServiceClientException)
 	{
-		$exDataServiceClientException = $exDataServiceClientException.InnerException;
 		if($exDataServiceClientException -is [System.Data.Services.Client.DataServiceClientException])
 		{
 			break;
 		}
+		$exDataServiceClientException = $exDataServiceClientException.InnerException;
 	}
 	
 	if($exDataServiceClientException -isnot [System.Data.Services.Client.DataServiceClientException])
