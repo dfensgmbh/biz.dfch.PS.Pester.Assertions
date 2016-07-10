@@ -84,11 +84,18 @@ PARAM
 		throw "Test was supposed to throw exception '{0}', but was not thrown." -f $expectedException;
 	}
 
-	Contract-Assert (!!$er.Exception.InnerException)
-
-	$ex = $er.Exception.InnerException;
+	$ex = @{InnerException = $er.Exception};
+	while($ex)
+	{
+		$result = $ex.GetType().FullName -match $expectedException;
+		if($result)
+		{
+			break;
+		}
+		
+		$ex = $ex.InnerException;
+	}
 	
-	$result = $ex.GetType().FullName -match $expectedException;
 	return $result;
 
 } # function
