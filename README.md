@@ -4,6 +4,7 @@ biz.dfch.PS.Pester.Assertions
 [![License](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg)](https://github.com/dfengmbh/biz.dfch.PS.Pester.Assertions/blob/master/LICENSE)
 ![Version](https://img.shields.io/nuget/v/biz.dfch.PS.Pester.Assertions.svg)
 [![PowerShell](https://img.shields.io/badge/PowerShell-3.0-blue.svg)](https://github.com/dfensgmbh/biz.dfch.PS.Pester.Assertions)
+[![Pester](https://img.shields.io/badge/PowerShell-3.3.14-blue.svg)](https://github.com/pester/Pester)
 
 Modules: biz.dfch.PS.Pester.Assertions
 
